@@ -1,54 +1,29 @@
 import { motion, AnimatePresence } from 'framer-motion'
 
-const NODES = [
-  {
-    id: 'bengaluru',
-    name: 'Bengaluru Distribution Center',
-    region: 'SOUTH INDIA',
-    products: ['UltraBook Pro 15" (ENT)'],
-    throughput: '12,400 units/day',
-    vulnerability: 'HIGH',
-    vulnerable: true,
-  },
-  {
-    id: 'mumbai',
-    name: 'Mumbai Logistics Hub',
-    region: 'WEST INDIA',
-    products: ['Creator Pro 14"'],
-    throughput: '18,200 units/day',
-    vulnerability: 'LOW',
-    vulnerable: false,
-  },
-  {
-    id: 'digital',
-    name: 'Digital Delivery Network',
-    region: 'GLOBAL',
-    products: ['CloudDesk Pro License'],
-    throughput: 'Unlimited',
-    vulnerability: 'MINIMAL',
-    vulnerable: false,
-  },
-  {
-    id: 'shenzhen',
-    name: 'Shenzhen Manufacturing',
-    region: 'CHINA',
-    products: ['Upstream Production'],
-    throughput: '55,000 units/day',
-    vulnerability: 'LOW',
-    vulnerable: false,
-  },
-  {
-    id: 'singapore',
-    name: 'Singapore Regional HQ',
-    region: 'SOUTHEAST ASIA',
-    products: ['Coordination'],
-    throughput: '—',
-    vulnerability: 'MINIMAL',
-    vulnerable: false,
-  },
-]
+// Map the backend's numeric vulnerabilityScore (0–1) to a display label + color
+function getRiskLabel(score) {
+  if (score >= 0.7)  return { label: 'HIGH',    color: 'text-cyber-red' }
+  if (score >= 0.3)  return { label: 'MEDIUM',  color: 'text-cyber-yellow' }
+  if (score >= 0.1)  return { label: 'LOW',     color: 'text-cyber-green' }
+  return               { label: 'MINIMAL', color: 'text-cyber-gray' }
+}
 
-function NodeRow({ node, isOffline }) {
+// Resolve product IDs (e.g. "product-a") to short display names via inventory
+function resolveProductNames(productIds, inventory) {
+  if (!inventory || !productIds?.length) return []
+  return productIds.map((id) => {
+    const item = inventory[id]
+    if (!item) return id
+    // Trim to a concise display label
+    return item.name.replace(' (Enterprise Edition)', ' (ENT)')
+                    .replace(' (High-Margin Alternative)', '')
+                    .replace(' — 1-Year License', ' License')
+  })
+}
+
+function NodeRow({ node, isOffline, inventory }) {
+  const risk = getRiskLabel(node.vulnerabilityScore ?? 0)
+  const productNames = resolveProductNames(node.products, inventory)
   return (
     <motion.div
       layout
@@ -84,13 +59,13 @@ function NodeRow({ node, isOffline }) {
         </div>
 
         <div className="flex items-center gap-2 font-mono text-[10px] text-cyber-gray">
-          <span>{node.region}</span>
+          <span>{node.region?.toUpperCase()}</span>
           <span className="text-[#1a1a2e]">│</span>
           <span>⚡ {node.throughput}</span>
         </div>
 
         <div className="mt-1 flex flex-wrap gap-1">
-          {node.products.map((p) => (
+          {(productNames.length ? productNames : ['—']).map((p) => (
             <span
               key={p}
               className={`px-1.5 py-0.5 rounded text-[9px] font-mono border ${
@@ -105,13 +80,10 @@ function NodeRow({ node, isOffline }) {
         </div>
       </div>
 
-      {/* Vulnerability score */}
-      <div className={`flex-shrink-0 text-right font-mono text-[10px] ${
-        node.vulnerability === 'HIGH' ? 'text-cyber-red' :
-        node.vulnerability === 'LOW' ? 'text-cyber-green' : 'text-cyber-gray'
-      }`}>
+      {/* Risk label derived from vulnerabilityScore */}
+      <div className={`flex-shrink-0 text-right font-mono text-[10px] ${risk.color}`}>
         <div className="text-cyber-gray/40 text-[9px]">RISK</div>
-        <div>{node.vulnerability}</div>
+        <div>{risk.label}</div>
       </div>
 
       {/* Offline overlay pulse */}
@@ -127,7 +99,7 @@ function NodeRow({ node, isOffline }) {
   )
 }
 
-export default function NetworkStatusViewer({ chaosState }) {
+export default function NetworkStatusViewer({ chaosState, nodes, inventory }) {
   const bengaluruOffline = chaosState !== 'idle'
 
   return (
@@ -138,22 +110,23 @@ export default function NetworkStatusViewer({ chaosState }) {
         <span>Supply Chain Node Registry</span>
         <div className="flex-1" />
         <span className={bengaluruOffline ? 'text-cyber-red glow-red' : 'text-cyber-green'}>
-          {bengaluruOffline ? '4/5 ONLINE' : '5/5 ONLINE'}
+          {bengaluruOffline ? `${nodes.length - 1}/${nodes.length} ONLINE` : `${nodes.length}/${nodes.length} ONLINE`}
         </span>
       </div>
 
-      {/* Node list */}
+      {/* Node list — rendered from live backend data */}
       <div className="flex-1 overflow-y-auto">
-        {NODES.map((node) => (
+        {nodes.map((node) => (
           <NodeRow
             key={node.id}
             node={node}
+            inventory={inventory}
             isOffline={node.id === 'bengaluru' && bengaluruOffline}
           />
         ))}
       </div>
 
-      {/* Connection line SVG decoration */}
+      {/* Connection status footer */}
       <div className="panel-header border-t border-b-0 border-[#1a1a2e] mt-auto">
         <span className="text-[10px]">
           {bengaluruOffline
