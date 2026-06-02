@@ -3,6 +3,8 @@ import { scenarios } from '../scenariosData'
 
 const ChaosContext = createContext()
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+
 // ─── Cascade adjacency map ───────────────────────────────────────────────────
 // When a node fails, these are the secondary nodes that cascade
 const CASCADE_MAP = {
@@ -66,7 +68,7 @@ export function ChaosProvider({ children }) {
 
   // Sync state data on config changes
   useEffect(() => {
-    let url = '/api/supply-chain'
+    let url = `${API_BASE}/api/supply-chain`
     if (simulationConfig) {
       const params = new URLSearchParams()
       const vertical = simulationConfig.category || simulationConfig.vertical || 'Electronics'
@@ -186,7 +188,7 @@ export function ChaosProvider({ children }) {
       setChaosState('resolving')
 
       try {
-        const url = `/api/resolve-crisis/stream?crisisNodeId=${crisisNodeId}&scenario=${scenarioId}&config=${encodeURIComponent(JSON.stringify(config))}`
+        const url = `${API_BASE}/api/resolve-crisis/stream?crisisNodeId=${crisisNodeId}&scenario=${scenarioId}&config=${encodeURIComponent(JSON.stringify(config))}`
         const eventSource = new EventSource(url)
 
         eventSource.onmessage = (event) => {
@@ -217,7 +219,7 @@ export function ChaosProvider({ children }) {
 
   const fallbackPost = async (config, crisisNodeId, scenarioId) => {
     try {
-      const res = await fetch('/api/resolve-crisis', {
+      const res = await fetch(`${API_BASE}/api/resolve-crisis`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
