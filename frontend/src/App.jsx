@@ -79,7 +79,7 @@ export default function App() {
         // Stream the agent logs in with staggered delay for terminal effect
         const streamLogs = (logs, idx = 0) => {
           if (idx >= logs.length) {
-            setChaosState('resolved')
+            setChaosState('awaiting_auth')
             setCampaign(data)
             return
           }
@@ -92,6 +92,12 @@ export default function App() {
         setChaosState('active') // stay in active so user can retry
       }
     }, 1200)
+  }, [])
+
+  // Human-In-The-Loop Authorization
+  const handleAuthorize = useCallback(() => {
+    setChaosState('resolved')
+    setDeployed(true)
   }, [])
 
   // Reset everything — only accessible via the header Reset icon
@@ -224,7 +230,13 @@ export default function App() {
             {/* Bottom row: Agent Console + Campaign Card */}
             <div className="flex-1 grid grid-cols-1 xl:grid-cols-2 gap-6">
               <AgentConsole logs={agentLogs} chaosState={chaosState} />
-              <CampaignCard campaign={campaign} chaosState={chaosState} deployed={deployed} setDeployed={setDeployed} />
+              <CampaignCard
+                campaign={campaign}
+                chaosState={chaosState}
+                deployed={deployed}
+                setDeployed={setDeployed}
+                onAuthorize={handleAuthorize}
+              />
             </div>
           </div>
         </main>

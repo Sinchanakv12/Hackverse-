@@ -152,7 +152,7 @@ export default function NetworkStatusViewer({ chaosState, nodes, inventory, tran
 
           {/* Resolved Route BOM -> CLOUD */}
           <AnimatePresence>
-            {deployed && (
+            {chaosState === 'resolved' && (
               <motion.path
                 d="M 25 55 L 50 15"
                 fill="none"

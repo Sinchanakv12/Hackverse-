@@ -48,7 +48,13 @@ const highlightAgentTags = (text) => {
 export default function AgentConsole({ logs, chaosState }) {
   const scrollRef = useRef(null)
   const isIdle = chaosState === 'idle'
-  const displayLines = isIdle ? IDLE_LINES : logs
+  const displayLines = isIdle ? IDLE_LINES : (
+    chaosState === 'awaiting_auth'
+      ? [...logs, '[SYSTEM] REROUTE PLAN DRAFTED. AWAITING HUMAN AUTHORIZATION (HITL).']
+      : (chaosState === 'resolved'
+          ? [...logs, '[SYSTEM] REROUTE PLAN DRAFTED. AWAITING HUMAN AUTHORIZATION (HITL).', '[SYSTEM] HUMAN AUTHORIZATION GRANTED. DEPLOYING REROUTE CAMPAIGN...']
+          : logs)
+  )
 
   // Auto-scroll to bottom as logs stream in
   useEffect(() => {
@@ -63,6 +69,7 @@ export default function AgentConsole({ logs, chaosState }) {
       <div className="panel-header border-b border-border-subtle">
         <div className={`w-1.5 h-1.5 rounded-full ${
           chaosState === 'resolving' ? 'bg-status-warning animate-pulse' :
+          chaosState === 'awaiting_auth' ? 'bg-status-warning animate-pulse' :
           chaosState === 'resolved' ? 'bg-status-safe' :
           isIdle ? 'bg-accent-blue/50' : 'bg-status-danger animate-pulse'
         }`} />
@@ -70,6 +77,7 @@ export default function AgentConsole({ logs, chaosState }) {
         <div className="flex-1" />
         <span className="text-[10px]">
           {chaosState === 'resolving' ? '⟳ RUNNING' :
+           chaosState === 'awaiting_auth' ? '⏳ AWAITING HITL AUTH' :
            chaosState === 'resolved' ? '✓ COMPLETE' :
            isIdle ? 'STANDBY' : '⚠ ALERT'}
         </span>
@@ -88,7 +96,9 @@ export default function AgentConsole({ logs, chaosState }) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.15, delay: isIdle ? i * 0.05 : 0 }}
               className={`flex gap-3.5 items-baseline ${
-                // Swarm handoffs
+                // Swarm handoffs & system messages
+                line.includes('[SYSTEM] HUMAN AUTHORIZATION GRANTED') ? 'text-status-safe font-bold border border-status-safe/30 bg-status-safe/10 p-2 my-1.5 px-2.5 rounded-lg w-[calc(100%-16px)]' :
+                line.includes('[SYSTEM]') ? 'text-status-warning font-bold border border-status-warning/30 bg-status-warning/10 p-2 my-1.5 px-2.5 rounded-lg w-[calc(100%-16px)] animate-pulse' :
                 line.includes('Handing off') || line.includes('Handover received') ? 'text-slate-200 font-bold border border-slate-700 bg-slate-800/40 p-2 my-1 px-2.5 rounded-lg w-[calc(100%-16px)]' :
                 // ReAct token colours
                 line.includes('[THOUGHT]')     ? 'text-violet-400 font-medium' :

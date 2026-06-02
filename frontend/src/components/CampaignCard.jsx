@@ -7,7 +7,7 @@ function formatCurrency(n) {
   return `$${n.toLocaleString()}`
 }
 
-export default function CampaignCard({ campaign, chaosState, deployed, setDeployed }) {
+export default function CampaignCard({ campaign, chaosState, deployed, setDeployed, onAuthorize }) {
   const isResolved = chaosState === 'resolved'
 
   return (
@@ -18,7 +18,9 @@ export default function CampaignCard({ campaign, chaosState, deployed, setDeploy
         <span>Demand Architect Intervention</span>
         <div className="flex-1" />
         {campaign && !deployed && (
-          <span className="text-[10px] font-sans font-bold text-status-safe animate-pulse">READY TO DEPLOY</span>
+          <span className={`text-[10px] font-sans font-bold animate-pulse ${chaosState === 'awaiting_auth' ? 'text-status-warning' : 'text-status-safe'}`}>
+            {chaosState === 'awaiting_auth' ? 'AWAITING AUTHORIZATION (HITL)' : 'READY TO DEPLOY'}
+          </span>
         )}
         {deployed && (
           <span className="text-[10px] font-sans font-bold text-status-safe">✓ DEPLOYED</span>
@@ -143,10 +145,14 @@ export default function CampaignCard({ campaign, chaosState, deployed, setDeploy
                 id="deploy-campaign-btn"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => setDeployed(true)}
-                className="w-full py-3.5 font-sans font-bold text-xs tracking-wider uppercase bg-status-safe hover:bg-emerald-600 text-white rounded-lg transition-all duration-200 shadow-lg shadow-status-safe/20 cursor-pointer border-0"
+                onClick={chaosState === 'awaiting_auth' ? onAuthorize : () => setDeployed(true)}
+                className={`w-full py-3.5 font-sans font-bold text-xs tracking-wider uppercase text-white rounded-lg transition-all duration-200 shadow-lg cursor-pointer border-0 ${
+                  chaosState === 'awaiting_auth'
+                    ? 'bg-status-warning hover:bg-amber-600 shadow-status-warning/20'
+                    : 'bg-status-safe hover:bg-emerald-600 shadow-status-safe/20'
+                }`}
               >
-                <span>▶ DEPLOY CAMPAIGN</span>
+                <span>{chaosState === 'awaiting_auth' ? '⚡ AUTHORIZE & DEPLOY' : '▶ DEPLOY CAMPAIGN'}</span>
               </motion.button>
             </motion.div>
           )}
