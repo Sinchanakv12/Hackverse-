@@ -25,11 +25,11 @@ export default function AgentConsole({ logs, chaosState }) {
   return (
     <div className="panel flex flex-col min-h-[280px]">
       {/* Panel header */}
-      <div className="panel-header">
+      <div className="panel-header border-b border-border-subtle">
         <div className={`w-1.5 h-1.5 rounded-full ${
-          chaosState === 'resolving' ? 'bg-cyber-yellow animate-pulse' :
-          chaosState === 'resolved' ? 'bg-cyber-green' :
-          isIdle ? 'bg-cyber-cyan/50' : 'bg-cyber-red animate-pulse'
+          chaosState === 'resolving' ? 'bg-status-warning animate-pulse' :
+          chaosState === 'resolved' ? 'bg-status-safe' :
+          isIdle ? 'bg-accent-blue/50' : 'bg-status-danger animate-pulse'
         }`} />
         <span>Agent Execution Console</span>
         <div className="flex-1" />
@@ -43,7 +43,7 @@ export default function AgentConsole({ logs, chaosState }) {
       {/* Terminal body */}
       <div
         ref={scrollRef}
-        className="flex-1 p-4 overflow-y-auto font-mono text-[11px] leading-relaxed space-y-1 bg-black rounded-lg m-3 border border-[#27272a]/30"
+        className="flex-1 p-4 overflow-y-auto font-mono text-[11px] leading-relaxed space-y-1 bg-slate-900 text-slate-300 rounded-md m-3 border border-border-subtle"
       >
         <AnimatePresence initial={false}>
           {displayLines.map((line, i) => (
@@ -58,15 +58,15 @@ export default function AgentConsole({ logs, chaosState }) {
                 line.includes('[ACTION]')      ? 'text-sky-400 font-medium' :
                 line.includes('[OBSERVATION]') ? 'text-zinc-400' :
                 // Status / severity
-                line.startsWith('🔴') || line.includes('⚠') ? 'text-cyber-red' :
-                line.startsWith('✅') || line.startsWith('💚') || line.startsWith('🚀') ? 'text-cyber-green' :
-                line.startsWith('▶')  ? 'text-cyber-cyan font-semibold' :
-                line.startsWith('🏷') ? 'text-cyber-cyan' :
-                line.startsWith('📉') ? 'text-cyber-red' :
+                line.startsWith('🔴') || line.includes('⚠') ? 'text-status-danger' :
+                line.startsWith('✅') || line.startsWith('💚') || line.startsWith('🚀') ? 'text-status-safe' :
+                line.startsWith('▶')  ? 'text-accent-blue font-semibold' :
+                line.startsWith('🏷') ? 'text-accent-blue' :
+                line.startsWith('📉') ? 'text-status-danger' :
                 // Divider lines
-                line.startsWith('─')  ? 'opacity-30 text-cyber-gray' :
+                line.startsWith('─')  ? 'opacity-30 text-text-secondary' :
                 line === ''           ? '' :
-                'text-cyber-gray'
+                'text-text-secondary'
               }`}
             >
               {line !== '' && !line.startsWith('━') && (
@@ -81,7 +81,7 @@ export default function AgentConsole({ logs, chaosState }) {
 
         {/* Blinking cursor while resolving */}
         {chaosState === 'resolving' && (
-          <div className="flex gap-3.5 text-cyber-cyan">
+          <div className="flex gap-3.5 text-accent-blue">
             <span className="text-[#71717a]/50 flex-shrink-0 select-none w-4 text-right font-sans text-[10px]">{displayLines.length + 1}</span>
             <span className="terminal-cursor" />
           </div>
@@ -89,13 +89,13 @@ export default function AgentConsole({ logs, chaosState }) {
       </div>
 
       {/* Line count footer */}
-      <div className="panel-header border-t border-b-0 mt-auto">
+      <div className="panel-header border-t border-border-subtle border-b-0 mt-auto">
         <span className="text-[10px]">
           {displayLines.length} lines
         </span>
         <div className="flex-1" />
         {!isIdle && (
-          <span className="text-[10px] text-cyber-cyan/60">
+          <span className="text-[10px] text-accent-blue/60">
             ReAct ORCHESTRATOR v3.0 — 5 TOOLS
           </span>
         )}

@@ -1,11 +1,12 @@
 import { motion, AnimatePresence } from 'framer-motion'
+import { AlertTriangle } from 'lucide-react'
 
 // Map the backend's numeric vulnerabilityScore (0–1) to a display label + color
 function getRiskLabel(score) {
-  if (score >= 0.7)  return { label: 'HIGH',    color: 'text-cyber-red' }
-  if (score >= 0.3)  return { label: 'MEDIUM',  color: 'text-cyber-yellow' }
-  if (score >= 0.1)  return { label: 'LOW',     color: 'text-cyber-green' }
-  return               { label: 'MINIMAL', color: 'text-cyber-gray' }
+  if (score >= 0.7)  return { label: 'HIGH',    color: 'text-status-danger' }
+  if (score >= 0.3)  return { label: 'MEDIUM',  color: 'text-status-warning' }
+  if (score >= 0.1)  return { label: 'LOW',     color: 'text-status-safe' }
+  return               { label: 'MINIMAL', color: 'text-secondary' }
 }
 
 // Resolve product IDs (e.g. "product-a") to short display names via inventory
@@ -27,42 +28,56 @@ function NodeRow({ node, isOffline, inventory }) {
   return (
     <motion.div
       layout
-      className={`relative flex items-start gap-3 p-3 border-b border-[#1a1a2e] last:border-b-0 transition-colors duration-500 ${
-        isOffline ? 'bg-cyber-red/5' : 'hover:bg-white/[0.02]'
+      className={`relative flex items-start gap-3 p-3 border-b border-border-subtle last:border-b-0 transition-colors duration-500 ${
+        isOffline ? 'bg-status-danger/5' : 'hover:bg-slate-50'
       }`}
     >
       {/* Status indicator */}
       <div className="mt-1 flex-shrink-0">
         {isOffline ? (
-          <div className="w-2.5 h-2.5 rounded-full bg-cyber-red animate-pulseRed" />
+          <div className="w-2.5 h-2.5 rounded-full bg-status-danger animate-pulse" />
         ) : (
-          <div className="w-2.5 h-2.5 rounded-full bg-cyber-green"
-            style={{ boxShadow: '0 0 6px rgba(57,255,20,0.6)' }} />
+          <div className="w-2.5 h-2.5 rounded-full bg-status-safe" />
         )}
       </div>
 
       {/* Node info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className={`font-sans text-xs font-bold truncate ${isOffline ? 'text-cyber-red' : 'text-white'}`}>
+          <span className={`font-sans text-xs font-bold truncate ${isOffline ? 'text-status-danger' : 'text-primary'}`}>
             {node.name}
           </span>
           {isOffline && (
             <motion.span
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex-shrink-0 px-1.5 py-0.5 bg-cyber-red/20 border border-cyber-red/30 rounded-md text-[9px] font-sans font-bold text-cyber-red tracking-wider"
+              className="flex-shrink-0 px-1.5 py-0.5 bg-status-danger/20 border border-status-danger/30 rounded-md text-[9px] font-sans font-bold text-status-danger tracking-wider"
             >
               OFFLINE
             </motion.span>
           )}
         </div>
 
-        <div className="flex items-center gap-2 font-sans text-[10px] text-cyber-gray">
+        <div className="flex items-center gap-2 font-sans text-[10px] text-secondary">
           <span>{node.region?.toUpperCase()}</span>
-          <span className="text-cyber-border">│</span>
+          <span className="text-subtle">│</span>
           <span>⚡ {node.throughput}</span>
         </div>
+
+        {node.weather && (
+          <div className="mt-1 font-sans text-[9px] text-secondary/80 flex flex-wrap items-center gap-1.5">
+            <span>☁ {isOffline ? node.weather.crisis.condition : node.weather.normal.condition}</span>
+            <span className="text-subtle">|</span>
+            <span>🌡 {isOffline ? node.weather.crisis.temp : node.weather.normal.temp}</span>
+            <span className="text-subtle">|</span>
+            <span>💨 {isOffline ? node.weather.crisis.wind : node.weather.normal.wind}</span>
+          </div>
+        )}
+        {node.weather && isOffline && node.weather.crisis.alert && (
+          <div className="mt-1 font-sans text-[9px] text-status-danger font-semibold animate-pulse">
+            ⚠ {node.weather.crisis.alert}
+          </div>
+        )}
 
         <div className="mt-2 flex flex-wrap gap-1.5">
           {(productNames.length ? productNames : ['—']).map((p) => (
@@ -70,8 +85,8 @@ function NodeRow({ node, isOffline, inventory }) {
               key={p}
               className={`px-2 py-0.5 rounded-md text-[9px] font-sans font-medium border ${
                 isOffline
-                  ? 'bg-cyber-red/10 border-cyber-red/20 text-cyber-red/80'
-                  : 'bg-cyber-cyan/5 border-cyber-cyan/15 text-cyber-cyan/70'
+                  ? 'bg-status-danger/10 border-status-danger/20 text-status-danger/80'
+                  : 'bg-accent-blue/5 border-accent-blue/15 text-accent-blue/70'
               }`}
             >
               {p}
@@ -82,7 +97,7 @@ function NodeRow({ node, isOffline, inventory }) {
 
       {/* Risk label derived from vulnerabilityScore */}
       <div className={`flex-shrink-0 text-right font-sans text-[10px] ${risk.color} font-bold`}>
-        <div className="text-cyber-gray/60 text-[9px] font-semibold">RISK</div>
+        <div className="text-secondary/60 text-[9px] font-semibold">RISK</div>
         <div>{risk.label}</div>
       </div>
 
@@ -92,156 +107,113 @@ function NodeRow({ node, isOffline, inventory }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: [0, 0.06, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="absolute inset-0 bg-cyber-red pointer-events-none rounded"
+          className="absolute inset-0 bg-status-danger pointer-events-none rounded"
         />
       )}
     </motion.div>
   )
 }
 
-export default function NetworkStatusViewer({ chaosState, nodes, inventory }) {
+export default function NetworkStatusViewer({ chaosState, nodes, inventory, transitRoutes, deployed }) {
   const bengaluruOffline = chaosState !== 'idle'
+  const route = transitRoutes?.find((r) => r.id === 'route-blr-mum')
 
   return (
     <div className="panel flex flex-col flex-1">
       {/* Panel header */}
       <div className="panel-header">
-        <div className="w-1.5 h-1.5 rounded-full bg-cyber-cyan/60" />
+        <div className="w-1.5 h-1.5 rounded-full bg-accent-blue/60" />
         <span>Supply Chain Node Registry</span>
         <div className="flex-1" />
-        <span className={bengaluruOffline ? 'text-cyber-red glow-red' : 'text-cyber-green'}>
+        <span className={bengaluruOffline ? 'text-status-danger' : 'text-status-safe'}>
           {bengaluruOffline ? `${nodes.length - 1}/${nodes.length} ONLINE` : `${nodes.length}/${nodes.length} ONLINE`}
         </span>
       </div>
 
       {/* ── MAP CONTAINER ── */}
-      <div className="relative h-48 border-b border-[#1a1a2e] bg-[rgba(5,5,8,0.4)] overflow-hidden">
-        <svg className="absolute inset-0 w-full h-full">
-          <defs>
-            <pattern id="map-grid" width="20" height="20" patternUnits="userSpaceOnUse">
-              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0, 245, 255, 0.018)" strokeWidth="1" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#map-grid)" />
+      <div className="relative h-56 border-b border-subtle bg-[#F8FAFC] overflow-hidden shrink-0">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 w-full h-full">
+          {/* Normal routes */}
+          <line x1="85" y1="25" x2="75" y2="75" stroke="#CBD5E1" strokeWidth="0.5" />
+          <line x1="75" y1="75" x2="25" y2="55" stroke="#CBD5E1" strokeWidth="0.5" />
 
-          {/* Connections (Shenzhen → Singapore, Singapore → Mumbai) */}
-          <line
-            x1="85%" y1="25%"
-            x2="75%" y2="80%"
-            stroke="rgba(0,245,255,0.2)"
-            strokeWidth="1.5"
-          />
-          <line
-            x1="75%" y1="80%"
-            x2="25%" y2="45%"
-            stroke="rgba(0,245,255,0.2)"
-            strokeWidth="1.5"
-          />
-
-          {/* Connection (Mumbai → Bengaluru) - dynamic based on chaosState */}
+          {/* BOM -> BLR Route */}
           <motion.line
-            x1="25%" y1="45%"
-            x2="35%" y2="75%"
-            strokeWidth="1.5"
-            animate={{
-              stroke: chaosState === 'idle' ? 'rgba(0,245,255,0.2)' : 'rgba(255,45,85,0.8)',
-              strokeDasharray: chaosState === 'idle' ? '0' : '4 4',
-              opacity: chaosState === 'idle' ? 1 : 0.4,
-            }}
-            transition={{ duration: 0.5 }}
+            x1="25"
+            y1="55"
+            x2="35"
+            y2="80"
+            stroke={bengaluruOffline ? '#ef4444' : '#CBD5E1'}
+            strokeWidth={bengaluruOffline ? '0.8' : '0.5'}
+            strokeDasharray={bengaluruOffline ? '2 2' : 'none'}
+            animate={bengaluruOffline ? { strokeDashoffset: [0, -10] } : {}}
+            transition={{ repeat: Infinity, ease: "linear", duration: 2 }}
           />
 
-          {/* Rerouted Connection (Mumbai → Digital Delivery / Cloud) - Active during crisis only */}
+          {/* Resolved Route BOM -> CLOUD */}
           <AnimatePresence>
-            {chaosState !== 'idle' && (
-              <motion.line
-                x1="25%" y1="45%"
-                x2="50%" y2="15%"
-                stroke="rgba(57,255,20,0.8)"
-                strokeWidth="2.5"
-                strokeDasharray="6 4"
-                initial={{ pathLength: 0, opacity: 0 }}
-                animate={{
-                  pathLength: 1,
-                  opacity: 1,
-                  strokeDashoffset: [0, -20]
-                }}
-                exit={{ pathLength: 0, opacity: 0 }}
-                transition={{
-                  pathLength: { duration: 0.8, ease: "easeOut" },
-                  opacity: { duration: 0.3 },
-                  strokeDashoffset: { repeat: Infinity, ease: "linear", duration: 1 }
-                }}
+            {deployed && (
+              <motion.path
+                d="M 25 55 L 50 15"
+                fill="none"
+                stroke="#10b981"
+                strokeWidth="0.8"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 1.5, ease: "easeInOut" }}
               />
             )}
           </AnimatePresence>
 
-          {/* Nodes Circles & Glowing Rings */}
-          {/* Shenzhen (SZX) */}
-          <circle cx="85%" cy="25%" r="4" fill="#00f5ff" />
-          <circle cx="85%" cy="25%" r="8" fill="rgba(0, 245, 255, 0.15)" />
+          {/* Nodes */}
+          {/* SZX (85,25) */}
+          <circle cx="85" cy="25" r="2" className="fill-status-safe" />
+          <text x="85" y="25" dx="3" dy="1" className="font-sans text-[3px] font-bold fill-[#64748B]">SZX</text>
 
-          {/* Digital Delivery / Cloud (CLOUD) */}
-          <circle cx="50%" cy="15%" r="4" fill="#00f5ff" />
-          <circle cx="50%" cy="15%" r="8" fill="rgba(0, 245, 255, 0.15)" />
+          {/* CLOUD (50,15) */}
+          <circle cx="50" cy="15" r="2" className="fill-status-safe" />
+          <text x="50" y="15" dx="-8" dy="-1" className="font-sans text-[3px] font-bold fill-[#64748B]">CLOUD</text>
 
-          {/* Mumbai (BOM) */}
-          <circle cx="25%" cy="45%" r="4" fill="#00f5ff" />
-          <circle cx="25%" cy="45%" r="8" fill="rgba(0, 245, 255, 0.15)" />
+          {/* BOM (25,55) */}
+          <circle cx="25" cy="55" r="2" className="fill-status-safe" />
+          <text x="25" y="55" dx="-8" dy="1" className="font-sans text-[3px] font-bold fill-[#64748B]">BOM</text>
 
-          {/* Singapore (SGP) */}
-          <circle cx="75%" cy="80%" r="4" fill="#00f5ff" />
-          <circle cx="75%" cy="80%" r="8" fill="rgba(0, 245, 255, 0.15)" />
+          {/* SGP (75,75) */}
+          <circle cx="75" cy="75" r="2" className="fill-status-safe" />
+          <text x="75" y="75" dx="3" dy="1" className="font-sans text-[3px] font-bold fill-[#64748B]">SGP</text>
 
-          {/* Bengaluru (BLR) - Disrupted Node */}
+          {/* BLR (35,80) */}
           <motion.circle
-            cx="35%"
-            cy="75%"
-            r="4"
-            animate={{
-              fill: chaosState === 'idle' ? '#00f5ff' : '#ff2d55',
-            }}
+            cx="35"
+            cy="80"
+            r="2"
+            animate={bengaluruOffline ? { fill: '#ef4444' } : { fill: '#10b981' }}
             transition={{ duration: 0.5 }}
           />
-          <AnimatePresence mode="popLayout">
-            {chaosState === 'idle' ? (
-              <motion.circle
-                key="blr-glow-idle"
-                cx="35%"
-                cy="75%"
-                r="8"
-                fill="rgba(0, 245, 255, 0.15)"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              />
-            ) : (
-              <g key="blr-glow-active">
-                <motion.circle
-                  cx="35%"
-                  cy="75%"
-                  r="8"
-                  fill="rgba(255, 45, 85, 0.25)"
-                />
-                <motion.circle
-                  cx="35%"
-                  cy="75%"
-                  animate={{ r: [6, 18], opacity: [0.6, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
-                  fill="none"
-                  stroke="#ff2d55"
-                  strokeWidth="1.5"
-                />
-              </g>
-            )}
-          </AnimatePresence>
+          {bengaluruOffline && (
+            <motion.circle
+              cx="35"
+              cy="80"
+              animate={{ r: [2, 6], opacity: [0.6, 0] }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: "easeOut" }}
+              fill="none"
+              stroke="#ef4444"
+              strokeWidth="0.5"
+            />
+          )}
+          <text x="35" y="80" dx="-8" dy="1" className="font-sans text-[3px] font-bold fill-[#64748B]">BLR</text>
 
-          {/* Node Labels */}
-          <text x="85%" y="25%" dx={10} dy={3} textAnchor="start" className="font-sans text-[9px] font-bold" fill="#8892a4">SZX</text>
-          <text x="50%" y="15%" dx={0} dy={-10} textAnchor="middle" className="font-sans text-[9px] font-bold" fill="#8892a4">CLOUD</text>
-          <text x="25%" y="45%" dx={-10} dy={3} textAnchor="end" className="font-sans text-[9px] font-bold" fill="#8892a4">BOM</text>
-          <text x="35%" y="75%" dx={-10} dy={3} textAnchor="end" className="font-sans text-[9px] font-bold" fill="#8892a4">BLR</text>
-          <text x="75%" y="80%" dx={10} dy={3} textAnchor="start" className="font-sans text-[9px] font-bold" fill="#8892a4">SGP</text>
+          {/* Roadblock overlay */}
+          {bengaluruOffline && (
+            <foreignObject x="30" y="67.5" width="40" height="20" style={{ overflow: 'visible' }}>
+              <div className="flex flex-col items-center justify-center -translate-x-1/2 -translate-y-1/2">
+                <div className="flex items-center gap-1 bg-status-danger text-white text-[5px] font-mono font-bold px-1 py-0.5 rounded shadow-lg border border-status-danger/40 uppercase tracking-wider animate-pulse">
+                  <AlertTriangle className="w-1.5 h-1.5 shrink-0" />
+                  <span>NH48 FLOODED</span>
+                </div>
+              </div>
+            </foreignObject>
+          )}
         </svg>
       </div>
 
@@ -258,12 +230,23 @@ export default function NetworkStatusViewer({ chaosState, nodes, inventory }) {
       </div>
 
       {/* Connection status footer */}
-      <div className="panel-header border-t border-b-0 border-[#27272a]/40 mt-auto">
-        <span className="font-sans text-[10px] font-semibold tracking-wide text-cyber-gray-light">
+      <div className="panel-header border-t border-b-0 border-border-subtle mt-auto flex flex-col gap-1 items-start">
+        <span className="font-sans text-[10px] font-semibold tracking-wide text-secondary">
           {bengaluruOffline
             ? '⚠ REROUTING: Mumbai → Singapore → Clients'
             : '✓ All nodes nominal — Mesh topology active'}
         </span>
+        {route && (
+          <span className="font-sans text-[9px] text-secondary/60 normal-case tracking-normal">
+            🛣 Route {route.source.toUpperCase()}–{route.target.toUpperCase()} ({route.type}):{' '}
+            <span className={bengaluruOffline ? 'text-status-danger font-semibold' : 'text-status-safe font-semibold'}>
+              {bengaluruOffline ? `${route.crisis.trafficIndex} (${route.crisis.delay} delay)` : `${route.normal.trafficIndex}`}
+            </span>
+            {bengaluruOffline && route.crisis.roadblocks?.[0] && (
+              <span className="text-status-danger/80"> — 🚧 roadblock: {route.crisis.roadblocks[0].type} ({route.crisis.roadblocks[0].location})</span>
+            )}
+          </span>
+        )}
       </div>
     </div>
   )

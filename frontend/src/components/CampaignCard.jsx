@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 function formatCurrency(n) {
@@ -8,25 +7,21 @@ function formatCurrency(n) {
   return `$${n.toLocaleString()}`
 }
 
-export default function CampaignCard({ campaign, chaosState }) {
-  const [deployed, setDeployed] = useState(false)
+export default function CampaignCard({ campaign, chaosState, deployed, setDeployed }) {
   const isResolved = chaosState === 'resolved'
-
-  // Reset deployed state when campaign changes
-  if (!campaign && deployed) setDeployed(false)
 
   return (
     <div className="panel flex flex-col min-h-[280px]">
       {/* Panel header */}
-      <div className="panel-header border-b border-[#27272a]/40">
-        <div className={`w-1.5 h-1.5 rounded-full ${campaign ? 'bg-cyber-green' : 'bg-cyber-gray/40'}`} />
+      <div className="panel-header border-b border-border-subtle/40">
+        <div className={`w-1.5 h-1.5 rounded-full ${campaign ? 'bg-status-safe' : 'bg-text-secondary/40'}`} />
         <span>Demand Architect Intervention</span>
         <div className="flex-1" />
         {campaign && !deployed && (
-          <span className="text-[10px] font-sans font-bold text-cyber-green animate-pulse">READY TO DEPLOY</span>
+          <span className="text-[10px] font-sans font-bold text-status-safe animate-pulse">READY TO DEPLOY</span>
         )}
         {deployed && (
-          <span className="text-[10px] font-sans font-bold text-cyber-green">✓ DEPLOYED</span>
+          <span className="text-[10px] font-sans font-bold text-status-safe">✓ DEPLOYED</span>
         )}
       </div>
 
@@ -42,13 +37,13 @@ export default function CampaignCard({ campaign, chaosState }) {
               exit={{ opacity: 0 }}
               className="flex-1 flex flex-col items-center justify-center p-6 text-center"
             >
-              <div className="w-12 h-12 border border-cyber-border rounded-lg flex items-center justify-center mb-3 text-cyber-gray/30 text-2xl bg-[#09090b]/50">
+              <div className="w-12 h-12 border border-border-subtle rounded-lg flex items-center justify-center mb-3 text-text-secondary/30 text-2xl bg-[#09090b]/50">
                 🤖
               </div>
-              <div className="font-sans text-xs text-[#71717a] font-medium tracking-wide">
+              <div className="font-sans text-xs text-text-secondary font-medium tracking-wide">
                 Awaiting agent output...
               </div>
-              <div className="font-sans text-[10px] text-[#71717a]/60 mt-1">
+              <div className="font-sans text-[10px] text-text-secondary/60 mt-1">
                 Campaign will appear here after crisis resolution
               </div>
             </motion.div>
@@ -69,14 +64,14 @@ export default function CampaignCard({ campaign, chaosState }) {
                     key={i}
                     animate={{ scaleY: [1, 2, 1] }}
                     transition={{ duration: 0.8, delay: i * 0.15, repeat: Infinity }}
-                    className="w-1 h-4 bg-cyber-cyan rounded-full"
+                    className="w-1 h-4 bg-accent-blue rounded-full"
                   />
                 ))}
               </div>
-              <div className="font-sans text-xs text-cyber-cyan font-bold tracking-widest uppercase">
+              <div className="font-sans text-xs text-accent-blue font-bold tracking-widest uppercase">
                 DEMAND SHAPER ACTIVE
               </div>
-              <div className="font-sans text-[10px] text-cyber-gray/50 mt-1">
+              <div className="font-sans text-[10px] text-text-secondary/50 mt-1">
                 Generating campaign strategy...
               </div>
             </motion.div>
@@ -94,24 +89,24 @@ export default function CampaignCard({ campaign, chaosState }) {
             >
               {/* Campaign title */}
               <div>
-                <div className="font-sans text-[9px] text-[#a1a1aa] uppercase tracking-widest mb-1.5 font-semibold">
+                <div className="font-sans text-[9px] text-text-secondary uppercase tracking-widest mb-1.5 font-semibold">
                   Campaign Title
                 </div>
-                <h2 className="font-sans font-extrabold text-sm text-cyber-cyan leading-tight">
+                <h2 className="font-sans font-extrabold text-sm text-accent-blue leading-tight">
                   {campaign.campaignTitle}
                 </h2>
               </div>
 
               {/* Target audience */}
               <div>
-                <div className="font-sans text-[9px] text-[#a1a1aa] uppercase tracking-widest mb-1.5 font-semibold">
+                <div className="font-sans text-[9px] text-text-secondary uppercase tracking-widest mb-1.5 font-semibold">
                   Target Audience
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {(campaign.targetAudience || '').split(',').slice(0, 3).map((seg, i) => (
                     <span
                       key={i}
-                      className="px-2 py-0.5 border border-cyber-cyan/20 bg-cyber-cyan/5 rounded-md text-[10px] font-sans text-cyber-cyan/80 font-medium"
+                      className="px-2 py-0.5 border border-accent-blue/20 bg-accent-blue/5 rounded-md text-[10px] font-sans text-accent-blue/80 font-medium"
                     >
                       {seg.trim()}
                     </span>
@@ -120,25 +115,25 @@ export default function CampaignCard({ campaign, chaosState }) {
               </div>
 
               {/* Recovery stat */}
-              <div className="border border-cyber-green/20 bg-cyber-green/5 rounded-lg p-3.5 flex items-center justify-between">
+              <div className="border border-status-safe/20 bg-status-safe/5 rounded-lg p-3.5 flex items-center justify-between">
                 <div>
-                  <div className="font-sans text-[9px] text-[#a1a1aa] uppercase tracking-widest font-semibold">Projected Recovery</div>
-                  <div className="font-mono text-xl font-bold text-cyber-green">
+                  <div className="font-sans text-[9px] text-text-secondary uppercase tracking-widest font-semibold">Projected Recovery</div>
+                  <div className="font-mono text-xl font-bold text-status-safe">
                     {formatCurrency(campaign.recoveredRevenue)}
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-sans text-[9px] text-[#a1a1aa] uppercase tracking-widest font-semibold">Bundle Discount</div>
-                  <div className="font-sans text-sm font-bold text-cyber-yellow">8% OFF</div>
+                  <div className="font-sans text-[9px] text-text-secondary uppercase tracking-widest font-semibold">Bundle Discount</div>
+                  <div className="font-sans text-sm font-bold text-status-warning">8% OFF</div>
                 </div>
               </div>
 
               {/* Marketing copy */}
               <div className="flex-1">
-                <div className="font-sans text-[9px] text-[#a1a1aa] uppercase tracking-widest mb-1.5 font-semibold">
+                <div className="font-sans text-[9px] text-text-secondary uppercase tracking-widest mb-1.5 font-semibold">
                   Marketing Copy
                 </div>
-                <div className="font-sans text-[11px] text-[#d4d4d8] leading-relaxed line-clamp-6 overflow-hidden bg-[#09090b]/20 p-2 border border-[#27272a]/30 rounded-lg">
+                <div className="font-sans text-[11px] text-text-primary leading-relaxed line-clamp-6 overflow-hidden bg-[#09090b]/20 p-2 border border-border-subtle/30 rounded-lg">
                   {campaign.marketingCopy}
                 </div>
               </div>
@@ -149,7 +144,7 @@ export default function CampaignCard({ campaign, chaosState }) {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setDeployed(true)}
-                className="w-full py-3.5 font-sans font-bold text-xs tracking-wider uppercase bg-cyber-green hover:bg-cyber-green-dim text-white rounded-lg transition-all duration-200 shadow-[0_0_20px_rgba(16,185,129,0.25)] cursor-pointer border-0"
+                className="w-full py-3.5 font-sans font-bold text-xs tracking-wider uppercase bg-status-safe hover:bg-emerald-600 text-white rounded-lg transition-all duration-200 shadow-lg shadow-status-safe/20 cursor-pointer border-0"
               >
                 <span>▶ DEPLOY CAMPAIGN</span>
               </motion.button>
@@ -169,9 +164,9 @@ export default function CampaignCard({ campaign, chaosState }) {
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                className="w-14 h-14 border border-cyber-green bg-cyber-green/5 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-cyber-green/10"
+                className="w-14 h-14 border border-status-safe bg-status-safe/5 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-status-safe/10"
               >
-                <span className="text-cyber-green text-xl font-bold">✓</span>
+                <span className="text-status-safe text-xl font-bold">✓</span>
               </motion.div>
 
               <motion.div
@@ -179,14 +174,14 @@ export default function CampaignCard({ campaign, chaosState }) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
               >
-                <div className="font-sans font-extrabold text-sm text-cyber-green tracking-wider uppercase">
+                <div className="font-sans font-extrabold text-sm text-status-safe tracking-wider uppercase">
                   REALLOCATION COMPLETE
                 </div>
-                <div className="font-sans text-[11px] text-[#a1a1aa] mt-2 max-w-xs leading-relaxed">
+                <div className="font-sans text-[11px] text-text-secondary mt-2 max-w-xs leading-relaxed">
                   Campaign "{campaign.campaignTitle}" deployed to{' '}
-                  <span className="text-cyber-cyan font-semibold">~240 B2B clients</span>.
+                  <span className="text-accent-blue font-semibold">~240 B2B clients</span>.
                 </div>
-                <div className="font-sans text-xs text-cyber-green/80 mt-3 font-semibold">
+                <div className="font-sans text-xs text-status-safe/80 mt-3 font-semibold">
                   <span className="font-mono">{formatCurrency(campaign.recoveredRevenue)}</span> revenue pathway activated.
                 </div>
               </motion.div>
@@ -198,13 +193,19 @@ export default function CampaignCard({ campaign, chaosState }) {
                 transition={{ delay: 0.6 }}
                 className="mt-4 grid grid-cols-2 gap-2.5 w-full max-w-xs"
               >
-                {[
-                  { label: 'Creator Pro 14"', units: '3,200', color: 'text-cyber-cyan' },
-                  { label: 'CloudDesk Licenses', units: '3,200', color: 'text-cyber-yellow' },
-                ].map((item) => (
-                  <div key={item.label} className="border border-[#27272a]/80 bg-[#09090b]/40 rounded-lg p-2.5 text-center">
+                {(campaign.vertical === 'vegetables'
+                  ? [
+                      { label: 'Flash-Frozen Purée', units: '3,200', color: 'text-accent-blue' },
+                      { label: 'Superfood Powder', units: '3,200', color: 'text-status-warning' },
+                    ]
+                  : [
+                      { label: 'Creator Pro 14"', units: '3,200', color: 'text-accent-blue' },
+                      { label: 'CloudDesk Licenses', units: '3,200', color: 'text-status-warning' },
+                    ]
+                ).map((item) => (
+                  <div key={item.label} className="border border-border-subtle/80 bg-[#09090b]/40 rounded-lg p-2.5 text-center">
                     <div className={`font-mono text-sm font-bold ${item.color}`}>{item.units}</div>
-                    <div className="font-sans text-[9px] text-[#a1a1aa] font-semibold mt-0.5 uppercase tracking-wider">{item.label}</div>
+                    <div className="font-sans text-[9px] text-text-secondary font-semibold mt-0.5 uppercase tracking-wider">{item.label}</div>
                   </div>
                 ))}
               </motion.div>

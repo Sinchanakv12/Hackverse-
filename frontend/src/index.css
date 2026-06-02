@@ -14,124 +14,76 @@ html, body, #root {
 }
 
 body {
-  background-color: #09090b;
-  color: #d4d4d8;
+  background-color: #F8FAFC;
+  color: #0F172A;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Premium Modern SaaS Grid Background ── */
+/* ── B2B Enterprise Slate Canvas ── */
 #root {
-  background-color: #09090b;
+  background-color: #F8FAFC;
   background-image:
-    radial-gradient(at top center, rgba(99, 102, 241, 0.08) 0px, transparent 65%),
-    linear-gradient(rgba(255, 255, 255, 0.007) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.007) 1px, transparent 1px);
-  background-size: 100% 100%, 32px 32px, 32px 32px;
+    linear-gradient(rgba(15, 23, 42, 0.01) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.01) 1px, transparent 1px);
+  background-size: 32px 32px;
   background-attachment: fixed;
   min-height: 100vh;
 }
 
-/* ── Disable Scanline Overlay ── */
-#root::before {
-  display: none;
-}
-
-/* ── Soft Modern SaaS Glow Utilities ── */
+/* ── B2B Layout Panels ── */
 @layer utilities {
-  .glow-cyan {
-    text-shadow: 0 0 12px rgba(99, 102, 241, 0.35);
-  }
-  .glow-red {
-    text-shadow: 0 0 12px rgba(244, 63, 94, 0.35);
-  }
-  .glow-green {
-    text-shadow: 0 0 12px rgba(16, 185, 129, 0.35);
-  }
-  .glow-yellow {
-    text-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
-  }
-  .border-glow-cyan {
-    box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25), inset 0 0 20px rgba(99, 102, 241, 0.03);
-  }
-  .border-glow-red {
-    box-shadow: 0 0 0 1px rgba(244, 63, 94, 0.25), inset 0 0 20px rgba(244, 63, 94, 0.03);
-  }
-  .border-glow-green {
-    box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.25), inset 0 0 20px rgba(16, 185, 129, 0.03);
-  }
   .panel {
-    background: #121214;
-    border: 1px solid #27272a;
-    border-radius: 0.75rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 0.5rem; /* rounded-lg */
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
   }
   .panel-header {
-    @apply flex items-center gap-2 px-4 py-3 border-b border-[#27272a] text-xs font-sans font-semibold text-[#a1a1aa] uppercase tracking-wider;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* gap-2 */
+    padding: 0.75rem 1rem; /* px-4 py-3 */
+    border-bottom: 1px solid #E2E8F0;
+    background-color: #F1F5F9;
+    font-size: 11px; /* text-[11px] */
+    font-weight: 700; /* font-bold */
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.05em; /* tracking-wider */
+    font-family: 'Inter', system-ui, sans-serif; /* font-sans */
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
   }
 }
 
-/* ── Custom Scrollbar ───────────────────────────────────────────────────── */
+/* ── Standardized B2B Scrollbar ─────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0a0a0f;
+  background: #f1f5f9;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1a1a2e;
-  border-radius: 2px;
+  background: #cbd5e1;
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 245, 255, 0.3);
+  background: #94a3b8;
 }
 
-/* ── Terminal Cursor ────────────────────────────────────────────────────── */
+/* ── Embedded Code Editor Blink Cursor ─────────────────────────────────── */
 .terminal-cursor::after {
   content: '█';
   animation: blink 1s step-end infinite;
-  color: #00f5ff;
+  color: #64748b;
   margin-left: 2px;
 }
 
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
-}
-
-/* ── Glitch Effect ──────────────────────────────────────────────────────── */
-.glitch {
-  position: relative;
-}
-.glitch::before,
-.glitch::after {
-  content: attr(data-text);
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%;
-  height: 100%;
-}
-.glitch::before {
-  color: #ff2d55;
-  animation: glitch-1 0.4s infinite;
-  clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
-}
-.glitch::after {
-  color: #00f5ff;
-  animation: glitch-2 0.4s infinite;
-  clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
-}
-
-@keyframes glitch-1 {
-  0%, 100% { transform: translate(0); }
-  20% { transform: translate(-2px, 1px); }
-  40% { transform: translate(2px, -1px); }
-}
-@keyframes glitch-2 {
-  0%, 100% { transform: translate(0); }
-  20% { transform: translate(2px, -1px); }
-  40% { transform: translate(-2px, 1px); }
 }
