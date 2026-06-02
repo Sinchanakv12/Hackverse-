@@ -30,7 +30,7 @@ function AnimatedCounter({ value, duration = 2.5, className }) {
   return <span className={className}>{display}</span>
 }
 
-export default function FinancialImpactMeter({ chaosState, projectedLoss, recoveredRevenue }) {
+export default function FinancialImpactMeter({ chaosState, projectedLoss, recoveredRevenue, campaign }) {
   // Determine what value the counter should display
   const isIdle = chaosState === 'idle'
   const isResolved = chaosState === 'resolved'
@@ -102,6 +102,46 @@ export default function FinancialImpactMeter({ chaosState, projectedLoss, recove
                 <span className="text-status-safe font-medium">
                   Recovered: <span className="font-mono">+{formatCurrency(recoveredRevenue)}</span>
                 </span>
+              </motion.div>
+            )}
+
+            {/* Swarm Financial Breakdown */}
+            {isResolved && campaign?.financialBreakdown && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: 'easeOut', delay: 0.2 }}
+                className="mt-5 pt-4 border-t border-border-subtle/50"
+              >
+                <div className="text-[10px] font-sans text-text-secondary font-bold tracking-wider mb-3 uppercase">
+                  Swarm Financial Optimization Breakdown
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="border border-emerald-500/10 bg-emerald-500/5 rounded-lg p-2.5 text-center transition-all hover:bg-emerald-500/10">
+                    <div className="font-mono text-sm font-bold text-status-safe">
+                      +{formatCurrency(campaign.financialBreakdown.avoidedPenalties)}
+                    </div>
+                    <div className="font-sans text-[9px] text-text-secondary font-semibold mt-1 uppercase tracking-wider">
+                      Avoided Penalties
+                    </div>
+                  </div>
+                  <div className="border border-emerald-500/10 bg-emerald-500/5 rounded-lg p-2.5 text-center transition-all hover:bg-emerald-500/10">
+                    <div className="font-mono text-sm font-bold text-status-safe">
+                      +{formatCurrency(campaign.financialBreakdown.salvagedCOGS)}
+                    </div>
+                    <div className="font-sans text-[9px] text-text-secondary font-semibold mt-1 uppercase tracking-wider">
+                      Salvaged COGS
+                    </div>
+                  </div>
+                  <div className="border border-rose-500/10 bg-rose-500/5 rounded-lg p-2.5 text-center transition-all hover:bg-rose-500/10">
+                    <div className="font-mono text-sm font-bold text-status-danger">
+                      {formatCurrency(campaign.financialBreakdown.newFreightCosts)}
+                    </div>
+                    <div className="font-sans text-[9px] text-text-secondary font-semibold mt-1 uppercase tracking-wider">
+                      New Freight Costs
+                    </div>
+                  </div>
+                </div>
               </motion.div>
             )}
           </div>

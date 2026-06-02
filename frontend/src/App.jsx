@@ -211,6 +211,7 @@ export default function App() {
               chaosState={chaosState}
               projectedLoss={projectedLoss}
               recoveredRevenue={campaign?.recoveredRevenue ?? 0}
+              campaign={campaign}
             />
 
             {/* Prediction Accuracy Gauge */}
