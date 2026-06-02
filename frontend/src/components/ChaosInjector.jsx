@@ -1,30 +1,113 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-// Simulated live sensor data
-const SENSOR_BASE = {
-  rainfall: 87.4,
-  floodLevel: 142,
-  power: 'OFFLINE',
-  structural: 'COMPROMISED',
-}
-
-function SensorReadout({ label, value, unit, color = 'text-cyber-gray-light', animate: doAnimate = false }) {
-  const [display, setDisplay] = useState(value)
+// ── Sensor 1: Rainfall — jitter around spike value when active ────────────
+function RainfallSensor({ isIdle }) {
+  const SPIKE = 145.2
+  const NOMINAL = 12.3
+  const [display, setDisplay] = useState(NOMINAL.toFixed(1))
 
   useEffect(() => {
-    if (!doAnimate) return
+    if (isIdle) {
+      setDisplay(NOMINAL.toFixed(1))
+      return
+    }
+    // Immediately show spike, then jitter every 600ms
+    setDisplay(SPIKE.toFixed(1))
     const interval = setInterval(() => {
-      setDisplay((parseFloat(value) + (Math.random() - 0.5) * 2).toFixed(1))
-    }, 800)
+      setDisplay((SPIKE + (Math.random() - 0.5) * 4).toFixed(1))
+    }, 600)
     return () => clearInterval(interval)
-  }, [value, doAnimate])
+  }, [isIdle])
 
   return (
-    <div className="flex justify-between items-center py-1 border-b border-[#1a1a2e] last:border-b-0">
-      <span className="font-mono text-[10px] text-cyber-gray uppercase tracking-wider">{label}</span>
-      <span className={`font-mono text-xs font-semibold ${color}`}>
-        {display}{unit}
+    <div className="flex justify-between items-center py-1 border-b border-[#1a1a2e]">
+      <span className="font-mono text-[10px] text-cyber-gray uppercase tracking-wider">Rainfall</span>
+      <span className={`font-mono text-xs font-semibold transition-colors duration-300 ${
+        isIdle ? 'text-cyber-gray-light' : 'text-cyber-yellow glow-yellow'
+      }`}>
+        {display} mm/hr
+      </span>
+    </div>
+  )
+}
+
+// ── Sensor 2: Flood Depth — count up from 0 to 182.5 over 1s, then jitter ─
+function FloodDepthSensor({ isIdle }) {
+  const TARGET = 182.5
+  const [display, setDisplay] = useState('0.0')
+  const frameRef = useRef(null)
+
+  useEffect(() => {
+    if (isIdle) {
+      cancelAnimationFrame(frameRef.current)
+      setDisplay('0.0')
+      return
+    }
+
+    // Count-up animation over ~1000ms using rAF
+    const start = performance.now()
+    const DURATION = 1000
+
+    const tick = (now) => {
+      const elapsed = now - start
+      const progress = Math.min(elapsed / DURATION, 1)
+      const eased = 1 - Math.pow(1 - progress, 3) // ease-out-cubic
+      setDisplay((eased * TARGET).toFixed(1))
+
+      if (progress < 1) {
+        frameRef.current = requestAnimationFrame(tick)
+      } else {
+        // Jitter phase after count-up completes
+        const jitter = setInterval(() => {
+          setDisplay((TARGET + (Math.random() - 0.5) * 3).toFixed(1))
+        }, 500)
+        frameRef.current = jitter
+      }
+    }
+
+    frameRef.current = requestAnimationFrame(tick)
+    return () => {
+      cancelAnimationFrame(frameRef.current)
+      clearInterval(frameRef.current)
+    }
+  }, [isIdle])
+
+  return (
+    <div className="flex justify-between items-center py-1 border-b border-[#1a1a2e]">
+      <span className="font-mono text-[10px] text-cyber-gray uppercase tracking-wider">Flood Depth</span>
+      <span className={`font-mono text-xs font-semibold transition-colors duration-300 ${
+        isIdle ? 'text-cyber-gray-light' : 'text-cyber-red animate-pulse'
+      }`}>
+        {display} cm
+      </span>
+    </div>
+  )
+}
+
+// ── Sensor 3: Power Grid — binary flip with pulse glow when critical ───────
+function PowerGridSensor({ isIdle }) {
+  return (
+    <div className="flex justify-between items-center py-1 border-b border-[#1a1a2e]">
+      <span className="font-mono text-[10px] text-cyber-gray uppercase tracking-wider">Power Grid</span>
+      <span className={`font-mono text-xs font-semibold transition-colors duration-200 ${
+        isIdle ? 'text-cyber-green' : 'text-cyber-red glow-red animate-pulse'
+      }`}>
+        {isIdle ? 'NOMINAL' : 'CRITICAL FAILURE'}
+      </span>
+    </div>
+  )
+}
+
+// ── Sensor 4: Structural — binary flip ───────────────────────────────────
+function StructuralSensor({ isIdle }) {
+  return (
+    <div className="flex justify-between items-center py-1">
+      <span className="font-mono text-[10px] text-cyber-gray uppercase tracking-wider">Structural</span>
+      <span className={`font-mono text-xs font-semibold transition-colors duration-200 ${
+        isIdle ? 'text-cyber-green' : 'text-cyber-red'
+      }`}>
+        {isIdle ? 'STABLE' : 'COMPROMISED'}
       </span>
     </div>
   )
@@ -56,32 +139,10 @@ export default function ChaosInjector({ chaosState, onInjectChaos, error }) {
             Live Environmental Sensors — Bengaluru
           </div>
           <div className="panel p-2 space-y-0">
-            <SensorReadout
-              label="Rainfall"
-              value={isIdle ? '12.3' : SENSOR_BASE.rainfall.toString()}
-              unit=" mm/hr"
-              color={isIdle ? 'text-cyber-gray-light' : 'text-cyber-yellow'}
-              animate={!isIdle}
-            />
-            <SensorReadout
-              label="Flood Depth"
-              value={isIdle ? '0.0' : SENSOR_BASE.floodLevel.toString()}
-              unit=" cm"
-              color={isIdle ? 'text-cyber-gray-light' : 'text-cyber-red'}
-              animate={!isIdle}
-            />
-            <SensorReadout
-              label="Power Grid"
-              value={isIdle ? 'NOMINAL' : SENSOR_BASE.power}
-              unit=""
-              color={isIdle ? 'text-cyber-green' : 'text-cyber-red'}
-            />
-            <SensorReadout
-              label="Structural"
-              value={isIdle ? 'STABLE' : SENSOR_BASE.structural}
-              unit=""
-              color={isIdle ? 'text-cyber-green' : 'text-cyber-red'}
-            />
+            <RainfallSensor    isIdle={isIdle} />
+            <FloodDepthSensor  isIdle={isIdle} />
+            <PowerGridSensor   isIdle={isIdle} />
+            <StructuralSensor  isIdle={isIdle} />
           </div>
         </div>
 
