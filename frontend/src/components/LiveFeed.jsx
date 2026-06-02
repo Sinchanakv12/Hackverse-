@@ -176,7 +176,7 @@ export default function LiveFeed() {
   const connect = useCallback(() => {
     if (esRef.current) esRef.current.close()
 
-    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000'
+    const base = import.meta.env.VITE_API_BASE_URL || 'https://hackverse-production-9017.up.railway.app'
     const url = `${base}/api/live-stream?crisisNodeId=${crisisNodeId}&crisis=${isCrisis}`
     const es = new EventSource(url)
     esRef.current = es

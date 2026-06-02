@@ -3,7 +3,7 @@ import { scenarios } from '../scenariosData'
 
 const ChaosContext = createContext()
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '')
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'https://hackverse-production-9017.up.railway.app').replace(/\/$/, '')
 
 // ─── Cascade adjacency map ───────────────────────────────────────────────────
 // When a node fails, these are the secondary nodes that cascade
