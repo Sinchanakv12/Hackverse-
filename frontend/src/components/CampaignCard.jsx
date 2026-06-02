@@ -18,15 +18,15 @@ export default function CampaignCard({ campaign, chaosState }) {
   return (
     <div className="panel flex flex-col min-h-[280px]">
       {/* Panel header */}
-      <div className="panel-header">
+      <div className="panel-header border-b border-[#27272a]/40">
         <div className={`w-1.5 h-1.5 rounded-full ${campaign ? 'bg-cyber-green' : 'bg-cyber-gray/40'}`} />
         <span>Demand Architect Intervention</span>
         <div className="flex-1" />
         {campaign && !deployed && (
-          <span className="text-[10px] text-cyber-green animate-pulse">READY TO DEPLOY</span>
+          <span className="text-[10px] font-sans font-bold text-cyber-green animate-pulse">READY TO DEPLOY</span>
         )}
         {deployed && (
-          <span className="text-[10px] text-cyber-green">✓ DEPLOYED</span>
+          <span className="text-[10px] font-sans font-bold text-cyber-green">✓ DEPLOYED</span>
         )}
       </div>
 
@@ -42,13 +42,13 @@ export default function CampaignCard({ campaign, chaosState }) {
               exit={{ opacity: 0 }}
               className="flex-1 flex flex-col items-center justify-center p-6 text-center"
             >
-              <div className="w-12 h-12 border border-[#1a1a2e] rounded flex items-center justify-center mb-3 text-cyber-gray/30 text-2xl">
+              <div className="w-12 h-12 border border-cyber-border rounded-lg flex items-center justify-center mb-3 text-cyber-gray/30 text-2xl bg-[#09090b]/50">
                 🤖
               </div>
-              <div className="font-mono text-xs text-cyber-gray/40 tracking-wider">
+              <div className="font-sans text-xs text-[#71717a] font-medium tracking-wide">
                 Awaiting agent output...
               </div>
-              <div className="font-mono text-[10px] text-cyber-gray/20 mt-1">
+              <div className="font-sans text-[10px] text-[#71717a]/60 mt-1">
                 Campaign will appear here after crisis resolution
               </div>
             </motion.div>
@@ -73,10 +73,10 @@ export default function CampaignCard({ campaign, chaosState }) {
                   />
                 ))}
               </div>
-              <div className="font-mono text-xs text-cyber-cyan tracking-widest">
+              <div className="font-sans text-xs text-cyber-cyan font-bold tracking-widest uppercase">
                 DEMAND SHAPER ACTIVE
               </div>
-              <div className="font-mono text-[10px] text-cyber-gray/50 mt-1">
+              <div className="font-sans text-[10px] text-cyber-gray/50 mt-1">
                 Generating campaign strategy...
               </div>
             </motion.div>
@@ -94,24 +94,24 @@ export default function CampaignCard({ campaign, chaosState }) {
             >
               {/* Campaign title */}
               <div>
-                <div className="font-mono text-[9px] text-cyber-gray/60 uppercase tracking-widest mb-1">
+                <div className="font-sans text-[9px] text-[#a1a1aa] uppercase tracking-widest mb-1.5 font-semibold">
                   Campaign Title
                 </div>
-                <h2 className="font-mono font-bold text-sm text-cyber-cyan glow-cyan leading-tight">
+                <h2 className="font-sans font-extrabold text-sm text-cyber-cyan leading-tight">
                   {campaign.campaignTitle}
                 </h2>
               </div>
 
               {/* Target audience */}
               <div>
-                <div className="font-mono text-[9px] text-cyber-gray/60 uppercase tracking-widest mb-1.5">
+                <div className="font-sans text-[9px] text-[#a1a1aa] uppercase tracking-widest mb-1.5 font-semibold">
                   Target Audience
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {(campaign.targetAudience || '').split(',').slice(0, 3).map((seg, i) => (
                     <span
                       key={i}
-                      className="px-2 py-0.5 border border-cyber-cyan/20 bg-cyber-cyan/5 rounded text-[10px] font-mono text-cyber-cyan/80"
+                      className="px-2 py-0.5 border border-cyber-cyan/20 bg-cyber-cyan/5 rounded-md text-[10px] font-sans text-cyber-cyan/80 font-medium"
                     >
                       {seg.trim()}
                     </span>
@@ -120,25 +120,25 @@ export default function CampaignCard({ campaign, chaosState }) {
               </div>
 
               {/* Recovery stat */}
-              <div className="panel p-3 border-cyber-green/20 bg-cyber-green/5 flex items-center justify-between">
+              <div className="border border-cyber-green/20 bg-cyber-green/5 rounded-lg p-3.5 flex items-center justify-between">
                 <div>
-                  <div className="font-mono text-[9px] text-cyber-gray/60 uppercase tracking-widest">Projected Recovery</div>
-                  <div className="font-mono text-xl font-bold text-cyber-green glow-green">
+                  <div className="font-sans text-[9px] text-[#a1a1aa] uppercase tracking-widest font-semibold">Projected Recovery</div>
+                  <div className="font-mono text-xl font-bold text-cyber-green">
                     {formatCurrency(campaign.recoveredRevenue)}
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="font-mono text-[9px] text-cyber-gray/60 uppercase tracking-widest">Bundle Discount</div>
-                  <div className="font-mono text-sm font-bold text-cyber-yellow">8% OFF</div>
+                  <div className="font-sans text-[9px] text-[#a1a1aa] uppercase tracking-widest font-semibold">Bundle Discount</div>
+                  <div className="font-sans text-sm font-bold text-cyber-yellow">8% OFF</div>
                 </div>
               </div>
 
               {/* Marketing copy */}
               <div className="flex-1">
-                <div className="font-mono text-[9px] text-cyber-gray/60 uppercase tracking-widest mb-1.5">
+                <div className="font-sans text-[9px] text-[#a1a1aa] uppercase tracking-widest mb-1.5 font-semibold">
                   Marketing Copy
                 </div>
-                <div className="font-mono text-[11px] text-cyber-gray leading-relaxed line-clamp-6 overflow-hidden">
+                <div className="font-sans text-[11px] text-[#d4d4d8] leading-relaxed line-clamp-6 overflow-hidden bg-[#09090b]/20 p-2 border border-[#27272a]/30 rounded-lg">
                   {campaign.marketingCopy}
                 </div>
               </div>
@@ -149,13 +149,9 @@ export default function CampaignCard({ campaign, chaosState }) {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setDeployed(true)}
-                className="w-full py-3 font-mono font-bold text-sm tracking-[0.15em] uppercase border-2 border-cyber-green text-cyber-green hover:bg-cyber-green/10 transition-all relative overflow-hidden group"
-                style={{ boxShadow: '0 0 20px rgba(57,255,20,0.2)' }}
+                className="w-full py-3.5 font-sans font-bold text-xs tracking-wider uppercase bg-cyber-green hover:bg-cyber-green-dim text-white rounded-lg transition-all duration-200 shadow-[0_0_20px_rgba(16,185,129,0.25)] cursor-pointer border-0"
               >
-                <span className="relative z-10 flex items-center justify-center gap-2">
-                  <span>▶ DEPLOY CAMPAIGN</span>
-                </span>
-                <div className="absolute inset-0 bg-cyber-green/5 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300" />
+                <span>▶ DEPLOY CAMPAIGN</span>
               </motion.button>
             </motion.div>
           )}
@@ -173,10 +169,9 @@ export default function CampaignCard({ campaign, chaosState }) {
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                className="w-16 h-16 border-2 border-cyber-green rounded-full flex items-center justify-center mb-4"
-                style={{ boxShadow: '0 0 30px rgba(57,255,20,0.4)' }}
+                className="w-14 h-14 border border-cyber-green bg-cyber-green/5 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-cyber-green/10"
               >
-                <span className="text-cyber-green text-2xl font-bold glow-green">✓</span>
+                <span className="text-cyber-green text-xl font-bold">✓</span>
               </motion.div>
 
               <motion.div
@@ -184,15 +179,15 @@ export default function CampaignCard({ campaign, chaosState }) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
               >
-                <div className="font-mono font-bold text-lg text-cyber-green glow-green tracking-widest">
+                <div className="font-sans font-extrabold text-sm text-cyber-green tracking-wider uppercase">
                   REALLOCATION COMPLETE
                 </div>
-                <div className="font-mono text-[11px] text-cyber-gray mt-2 max-w-xs">
+                <div className="font-sans text-[11px] text-[#a1a1aa] mt-2 max-w-xs leading-relaxed">
                   Campaign "{campaign.campaignTitle}" deployed to{' '}
-                  <span className="text-cyber-cyan">~240 B2B clients</span>.
+                  <span className="text-cyber-cyan font-semibold">~240 B2B clients</span>.
                 </div>
-                <div className="font-mono text-xs text-cyber-green/70 mt-3">
-                  {formatCurrency(campaign.recoveredRevenue)} revenue pathway activated.
+                <div className="font-sans text-xs text-cyber-green/80 mt-3 font-semibold">
+                  <span className="font-mono">{formatCurrency(campaign.recoveredRevenue)}</span> revenue pathway activated.
                 </div>
               </motion.div>
 
@@ -201,15 +196,15 @@ export default function CampaignCard({ campaign, chaosState }) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.6 }}
-                className="mt-4 grid grid-cols-2 gap-3 w-full max-w-xs"
+                className="mt-4 grid grid-cols-2 gap-2.5 w-full max-w-xs"
               >
                 {[
                   { label: 'Creator Pro 14"', units: '3,200', color: 'text-cyber-cyan' },
                   { label: 'CloudDesk Licenses', units: '3,200', color: 'text-cyber-yellow' },
                 ].map((item) => (
-                  <div key={item.label} className="panel p-2 text-center">
+                  <div key={item.label} className="border border-[#27272a]/80 bg-[#09090b]/40 rounded-lg p-2.5 text-center">
                     <div className={`font-mono text-sm font-bold ${item.color}`}>{item.units}</div>
-                    <div className="font-mono text-[9px] text-cyber-gray/60 mt-0.5">{item.label}</div>
+                    <div className="font-sans text-[9px] text-[#a1a1aa] font-semibold mt-0.5 uppercase tracking-wider">{item.label}</div>
                   </div>
                 ))}
               </motion.div>

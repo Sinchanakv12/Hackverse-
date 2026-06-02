@@ -21,8 +21,8 @@ function RainfallSensor({ isIdle }) {
   }, [isIdle])
 
   return (
-    <div className="flex justify-between items-center py-1 border-b border-[#1a1a2e]">
-      <span className="font-mono text-[10px] text-cyber-gray uppercase tracking-wider">Rainfall</span>
+    <div className="flex justify-between items-center py-2 border-b border-cyber-border">
+      <span className="font-sans text-[10px] text-cyber-gray uppercase tracking-wider">Rainfall</span>
       <span className={`font-mono text-xs font-semibold transition-colors duration-300 ${
         isIdle ? 'text-cyber-gray-light' : 'text-cyber-yellow glow-yellow'
       }`}>
@@ -74,10 +74,10 @@ function FloodDepthSensor({ isIdle }) {
   }, [isIdle])
 
   return (
-    <div className="flex justify-between items-center py-1 border-b border-[#1a1a2e]">
-      <span className="font-mono text-[10px] text-cyber-gray uppercase tracking-wider">Flood Depth</span>
+    <div className="flex justify-between items-center py-2 border-b border-cyber-border">
+      <span className="font-sans text-[10px] text-cyber-gray uppercase tracking-wider">Flood Depth</span>
       <span className={`font-mono text-xs font-semibold transition-colors duration-300 ${
-        isIdle ? 'text-cyber-gray-light' : 'text-cyber-red animate-pulse'
+        isIdle ? 'text-cyber-gray-light' : 'text-cyber-red'
       }`}>
         {display} cm
       </span>
@@ -88,10 +88,10 @@ function FloodDepthSensor({ isIdle }) {
 // ── Sensor 3: Power Grid — binary flip with pulse glow when critical ───────
 function PowerGridSensor({ isIdle }) {
   return (
-    <div className="flex justify-between items-center py-1 border-b border-[#1a1a2e]">
-      <span className="font-mono text-[10px] text-cyber-gray uppercase tracking-wider">Power Grid</span>
-      <span className={`font-mono text-xs font-semibold transition-colors duration-200 ${
-        isIdle ? 'text-cyber-green' : 'text-cyber-red glow-red animate-pulse'
+    <div className="flex justify-between items-center py-2 border-b border-cyber-border">
+      <span className="font-sans text-[10px] text-cyber-gray uppercase tracking-wider">Power Grid</span>
+      <span className={`font-sans text-xs font-semibold transition-colors duration-200 ${
+        isIdle ? 'text-cyber-green' : 'text-cyber-red glow-red'
       }`}>
         {isIdle ? 'NOMINAL' : 'CRITICAL FAILURE'}
       </span>
@@ -102,9 +102,9 @@ function PowerGridSensor({ isIdle }) {
 // ── Sensor 4: Structural — binary flip ───────────────────────────────────
 function StructuralSensor({ isIdle }) {
   return (
-    <div className="flex justify-between items-center py-1">
-      <span className="font-mono text-[10px] text-cyber-gray uppercase tracking-wider">Structural</span>
-      <span className={`font-mono text-xs font-semibold transition-colors duration-200 ${
+    <div className="flex justify-between items-center py-2">
+      <span className="font-sans text-[10px] text-cyber-gray uppercase tracking-wider">Structural</span>
+      <span className={`font-sans text-xs font-semibold transition-colors duration-200 ${
         isIdle ? 'text-cyber-green' : 'text-cyber-red'
       }`}>
         {isIdle ? 'STABLE' : 'COMPROMISED'}
@@ -135,10 +135,10 @@ export default function ChaosInjector({ chaosState, onInjectChaos, error }) {
       <div className="p-4 space-y-4">
         {/* Pre-crisis sensors */}
         <div>
-          <div className="font-mono text-[9px] text-cyber-gray/60 uppercase tracking-widest mb-2">
+          <div className="font-sans text-[9px] text-[#a1a1aa] uppercase tracking-widest mb-2 font-semibold">
             Live Environmental Sensors — Bengaluru
           </div>
-          <div className="panel p-2 space-y-0">
+          <div className="border border-[#27272a] rounded-lg p-3 space-y-0 bg-[#09090b]/40">
             <RainfallSensor    isIdle={isIdle} />
             <FloodDepthSensor  isIdle={isIdle} />
             <PowerGridSensor   isIdle={isIdle} />
@@ -147,13 +147,13 @@ export default function ChaosInjector({ chaosState, onInjectChaos, error }) {
         </div>
 
         {/* Scenario info */}
-        <div className="panel p-3 border-cyber-red/20 bg-cyber-red/5">
-          <div className="font-mono text-[9px] text-cyber-red/60 uppercase tracking-widest mb-1">Scenario: BENGALURU-FLOOD-CAT4</div>
-          <div className="font-mono text-[11px] text-cyber-gray-light leading-relaxed">
+        <div className="border border-cyber-red/20 bg-cyber-red/5 rounded-lg p-4">
+          <div className="font-sans text-[9px] text-cyber-red/80 uppercase tracking-widest mb-1.5 font-semibold">Scenario: BENGALURU-FLOOD-CAT4</div>
+          <div className="font-sans text-xs text-[#d4d4d8] leading-relaxed">
             Simulates a Category 4 monsoon flood disabling the Bengaluru Distribution Center.
-            <span className="text-cyber-red"> 5,000 units</span> of{' '}
-            <span className="text-white">UltraBook Pro 15"</span> stranded.
-            Est. downtime: <span className="text-cyber-yellow">14–21 days</span>.
+            <span className="text-cyber-red font-semibold"> 5,000 units</span> of{' '}
+            <span className="text-white font-semibold font-sans">UltraBook Pro 15"</span> stranded.
+            Est. downtime: <span className="text-cyber-yellow font-semibold">14–21 days</span>.
           </div>
         </div>
 
@@ -166,44 +166,17 @@ export default function ChaosInjector({ chaosState, onInjectChaos, error }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onHoverStart={() => setBtnHovered(true)}
-              onHoverEnd={() => setBtnHovered(false)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={onInjectChaos}
-              className="relative w-full overflow-hidden group"
+              className="w-full bg-cyber-red hover:bg-cyber-red-dim text-white font-sans font-bold tracking-wider py-4 px-4 rounded-lg transition-all duration-200 shadow-[0_0_20px_rgba(244,63,94,0.3)] flex flex-col items-center justify-center gap-1 cursor-pointer border-0"
             >
-              {/* Button glow background */}
-              <div
-                className={`absolute inset-0 transition-opacity duration-300 ${btnHovered ? 'opacity-100' : 'opacity-0'}`}
-                style={{ background: 'radial-gradient(ellipse at center, rgba(255,45,85,0.15) 0%, transparent 70%)' }}
-              />
-
-              {/* Animated border */}
-              <div className={`relative border-2 transition-all duration-300 px-4 py-4 font-mono font-bold tracking-[0.15em] text-sm uppercase
-                ${btnHovered
-                  ? 'border-cyber-red text-white bg-cyber-red/10'
-                  : 'border-cyber-red/60 text-cyber-red bg-cyber-red/5'
-                }`}
-                style={btnHovered ? { boxShadow: '0 0 24px rgba(255,45,85,0.4), inset 0 0 24px rgba(255,45,85,0.08)' } : {}}
-              >
-                {/* Corner decorations */}
-                <span className="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-cyber-red" />
-                <span className="absolute top-0 right-0 w-3 h-3 border-t-2 border-r-2 border-cyber-red" />
-                <span className="absolute bottom-0 left-0 w-3 h-3 border-b-2 border-l-2 border-cyber-red" />
-                <span className="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-cyber-red" />
-
-                <div className="flex items-center justify-center gap-3">
-                  <motion.span
-                    animate={btnHovered ? { rotate: [0, -10, 10, -10, 0] } : {}}
-                    transition={{ duration: 0.4 }}
-                    className="text-lg"
-                  >
-                    ⚡
-                  </motion.span>
-                  <span>INJECT CHAOS</span>
-                </div>
-                <div className="text-[10px] font-normal tracking-widest mt-0.5 opacity-80">
-                  BENGALURU FLOOD SCENARIO
-                </div>
+              <div className="flex items-center justify-center gap-3">
+                <span className="text-lg">⚡</span>
+                <span>INJECT CHAOS</span>
+              </div>
+              <div className="text-[10px] font-normal tracking-widest mt-0.5 opacity-80 uppercase">
+                BENGALURU FLOOD SCENARIO
               </div>
             </motion.button>
           ) : (
@@ -211,7 +184,7 @@ export default function ChaosInjector({ chaosState, onInjectChaos, error }) {
               key="status"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className={`w-full border px-4 py-3 font-mono text-sm text-center ${
+              className={`w-full border px-4 py-3 font-sans text-sm text-center rounded-lg ${
                 isResolving
                   ? 'border-cyber-yellow/40 bg-cyber-yellow/5 text-cyber-yellow'
                   : 'border-cyber-red/40 bg-cyber-red/10 text-cyber-red'
@@ -240,7 +213,7 @@ export default function ChaosInjector({ chaosState, onInjectChaos, error }) {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="font-mono text-[11px] text-cyber-red border border-cyber-red/30 bg-cyber-red/5 p-2 rounded"
+              className="font-sans text-[11px] text-cyber-red border border-cyber-red/30 bg-cyber-red/5 p-3 rounded-lg"
             >
               ⚠ AGENT ERROR: {error}
               <div className="text-[10px] text-cyber-gray mt-1">Check that backend is running on port 5000.</div>

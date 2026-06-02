@@ -51,14 +51,14 @@ export default function FinancialImpactMeter({ chaosState, projectedLoss, recove
     : 'text-cyber-red glow-red'
 
   return (
-    <div className="panel">
+    <div className="panel overflow-hidden" style={{ background: 'radial-gradient(circle at 50% 30%, #1a1a24 0%, #121214 100%)' }}>
       {/* Panel header */}
-      <div className="panel-header">
+      <div className="panel-header border-b border-[#27272a]/40">
         <div className={`w-1.5 h-1.5 rounded-full ${isIdle ? 'bg-cyber-gray' : isRecovering ? 'bg-cyber-green' : 'bg-cyber-red animate-pulse'}`} />
         <span>Financial Impact Meter</span>
         <div className="flex-1" />
         {!isIdle && (
-          <span className={`text-[10px] ${isRecovering ? 'text-cyber-green' : 'text-cyber-red'}`}>
+          <span className={`text-[10px] font-sans font-bold tracking-wider ${isRecovering ? 'text-cyber-green' : 'text-cyber-red'}`}>
             {isRecovering ? '▼ RECOVERING' : '▲ ESCALATING'}
           </span>
         )}
@@ -69,7 +69,7 @@ export default function FinancialImpactMeter({ chaosState, projectedLoss, recove
 
           {/* ── Main Loss Counter ─────────────────────────────────────── */}
           <div className="md:col-span-2">
-            <div className="text-[10px] font-mono text-cyber-gray tracking-widest mb-2 uppercase">
+            <div className="text-[9px] font-sans text-[#a1a1aa] font-semibold tracking-widest mb-3 uppercase">
               {isResolved ? 'Net Projected Loss (Post-Intervention)' : 'Projected Revenue Loss'}
             </div>
 
@@ -77,12 +77,12 @@ export default function FinancialImpactMeter({ chaosState, projectedLoss, recove
               <AnimatedCounter
                 value={finalDisplay}
                 duration={isResolved ? 3.5 : 2.8}
-                className={`font-mono font-bold text-5xl md:text-6xl leading-none tracking-tight transition-colors duration-700 ${meterColor}`}
+                className={`font-sans font-black text-5xl md:text-6xl leading-none tracking-tight transition-colors duration-700 ${meterColor}`}
               />
 
               {/* Idle state label */}
               {isIdle && (
-                <div className="font-mono text-xs text-cyber-gray/50 mt-2 tracking-wider">
+                <div className="font-sans text-xs text-[#71717a] mt-2 tracking-wider">
                   — MONITORING — No active disruptions
                 </div>
               )}
@@ -93,14 +93,14 @@ export default function FinancialImpactMeter({ chaosState, projectedLoss, recove
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mt-3 flex items-center gap-4 font-mono text-[11px]"
+                className="mt-3 flex items-center gap-4 font-sans text-[11px]"
               >
-                <span className="text-cyber-red/80">
-                  Loss: {formatCurrency(projectedLoss)}
+                <span className="text-cyber-red/80 font-medium">
+                  Loss: <span className="font-mono">{formatCurrency(projectedLoss)}</span>
                 </span>
-                <span className="text-cyber-gray/40">—</span>
-                <span className="text-cyber-green">
-                  Recovered: +{formatCurrency(recoveredRevenue)}
+                <span className="text-cyber-border">—</span>
+                <span className="text-cyber-green font-medium">
+                  Recovered: <span className="font-mono">+{formatCurrency(recoveredRevenue)}</span>
                 </span>
               </motion.div>
             )}
@@ -110,14 +110,14 @@ export default function FinancialImpactMeter({ chaosState, projectedLoss, recove
           <div>
             {/* Stats grid */}
             <div className="grid grid-cols-2 gap-2 mb-3">
-              <div className="panel p-2 text-center">
-                <div className="font-mono text-[9px] text-cyber-gray/60 uppercase tracking-wider mb-1">Units at Risk</div>
+              <div className="border border-[#27272a]/80 bg-[#09090b]/40 rounded-lg p-2.5 text-center">
+                <div className="font-sans text-[9px] text-[#a1a1aa] uppercase tracking-wider mb-1 font-semibold">Units at Risk</div>
                 <div className={`font-mono text-sm font-bold ${isIdle ? 'text-cyber-gray' : 'text-cyber-red'}`}>
                   {isIdle ? '—' : '5,000'}
                 </div>
               </div>
-              <div className="panel p-2 text-center">
-                <div className="font-mono text-[9px] text-cyber-gray/60 uppercase tracking-wider mb-1">Recovery</div>
+              <div className="border border-[#27272a]/80 bg-[#09090b]/40 rounded-lg p-2.5 text-center">
+                <div className="font-sans text-[9px] text-[#a1a1aa] uppercase tracking-wider mb-1 font-semibold">Recovery</div>
                 <div className={`font-mono text-sm font-bold ${recoveryPct > 0 ? 'text-cyber-green' : 'text-cyber-gray'}`}>
                   {recoveryPct > 0 ? `${recoveryPct.toFixed(0)}%` : '—'}
                 </div>
@@ -125,18 +125,18 @@ export default function FinancialImpactMeter({ chaosState, projectedLoss, recove
             </div>
 
             {/* Progress bar */}
-            <div className="h-1.5 bg-[#1a1a2e] rounded-full overflow-hidden">
+            <div className="h-2 bg-[#09090b] rounded-full overflow-hidden border border-[#27272a]/40">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${recoveryPct}%` }}
                 transition={{ duration: 3, ease: 'easeOut', delay: 0.5 }}
                 className="h-full bg-cyber-green rounded-full"
-                style={{ boxShadow: recoveryPct > 0 ? '0 0 8px rgba(57,255,20,0.6)' : 'none' }}
+                style={{ boxShadow: recoveryPct > 0 ? '0 0 10px rgba(16,185,129,0.5)' : 'none' }}
               />
             </div>
             {recoveryPct > 0 && (
-              <div className="font-mono text-[10px] text-cyber-green/60 mt-1 text-right">
-                {formatCurrency(recoveredRevenue)} recovered
+              <div className="font-sans text-[10px] text-cyber-green/80 mt-1.5 text-right font-medium">
+                <span className="font-mono">{formatCurrency(recoveredRevenue)}</span> recovered
               </div>
             )}
           </div>
@@ -147,16 +147,16 @@ export default function FinancialImpactMeter({ chaosState, projectedLoss, recove
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="mt-4 pt-4 border-t border-[#1a1a2e] grid grid-cols-3 gap-3"
+            className="mt-5 pt-4 border-t border-[#27272a]/60 grid grid-cols-3 gap-3"
           >
             {[
               { label: 'Disrupted SKUs', value: '1', color: 'text-cyber-red' },
               { label: 'ETA Recovery', value: '14–21 days', color: 'text-cyber-yellow' },
-              { label: 'Affected Clients', value: '~240 B2B', color: 'text-cyber-gray-light' },
+              { label: 'Affected Clients', value: '~240 B2B', color: 'text-[#d4d4d8]' },
             ].map((item) => (
               <div key={item.label} className="text-center">
                 <div className={`font-mono text-sm font-bold ${item.color}`}>{item.value}</div>
-                <div className="font-mono text-[9px] text-cyber-gray/60 tracking-wider">{item.label}</div>
+                <div className="font-sans text-[9px] text-[#a1a1aa] font-semibold tracking-wider mt-0.5 uppercase">{item.label}</div>
               </div>
             ))}
           </motion.div>

@@ -43,8 +43,7 @@ export default function AgentConsole({ logs, chaosState }) {
       {/* Terminal body */}
       <div
         ref={scrollRef}
-        className="flex-1 p-4 overflow-y-auto font-mono text-[11px] leading-relaxed space-y-0.5"
-        style={{ background: 'rgba(5, 5, 8, 0.8)' }}
+        className="flex-1 p-4 overflow-y-auto font-mono text-[11px] leading-relaxed space-y-1 bg-black rounded-lg m-3 border border-[#27272a]/30"
       >
         <AnimatePresence initial={false}>
           {displayLines.map((line, i) => (
@@ -53,25 +52,25 @@ export default function AgentConsole({ logs, chaosState }) {
               initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.15, delay: isIdle ? i * 0.05 : 0 }}
-              className={`flex gap-2 ${
+              className={`flex gap-3.5 ${
                 // ReAct token colours
-                line.includes('[THOUGHT]')     ? 'text-violet-400' :
-                line.includes('[ACTION]')      ? 'text-cyber-cyan' :
-                line.includes('[OBSERVATION]') ? 'text-cyber-gray-light' :
+                line.includes('[THOUGHT]')     ? 'text-violet-400 font-medium' :
+                line.includes('[ACTION]')      ? 'text-sky-400 font-medium' :
+                line.includes('[OBSERVATION]') ? 'text-zinc-400' :
                 // Status / severity
                 line.startsWith('🔴') || line.includes('⚠') ? 'text-cyber-red' :
-                line.startsWith('✅') || line.startsWith('💚') || line.startsWith('🚀') ? 'text-cyber-green glow-green' :
+                line.startsWith('✅') || line.startsWith('💚') || line.startsWith('🚀') ? 'text-cyber-green' :
                 line.startsWith('▶')  ? 'text-cyber-cyan font-semibold' :
                 line.startsWith('🏷') ? 'text-cyber-cyan' :
                 line.startsWith('📉') ? 'text-cyber-red' :
                 // Divider lines
-                line.startsWith('─')  ? 'text-[#1a1a2e]' :
+                line.startsWith('─')  ? 'opacity-30 text-cyber-gray' :
                 line === ''           ? '' :
                 'text-cyber-gray'
               }`}
             >
               {line !== '' && !line.startsWith('━') && (
-                <span className="text-cyber-cyan/30 flex-shrink-0 select-none">›</span>
+                <span className="text-[#71717a]/50 flex-shrink-0 select-none w-4 text-right font-sans text-[10px]">{(i + 1)}</span>
               )}
               <span className={line.startsWith('━') ? 'w-full' : ''}>
                 {line}
@@ -82,8 +81,8 @@ export default function AgentConsole({ logs, chaosState }) {
 
         {/* Blinking cursor while resolving */}
         {chaosState === 'resolving' && (
-          <div className="flex gap-2 text-cyber-cyan">
-            <span className="text-cyber-cyan/30">›</span>
+          <div className="flex gap-3.5 text-cyber-cyan">
+            <span className="text-[#71717a]/50 flex-shrink-0 select-none w-4 text-right font-sans text-[10px]">{displayLines.length + 1}</span>
             <span className="terminal-cursor" />
           </div>
         )}

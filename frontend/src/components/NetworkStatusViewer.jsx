@@ -44,31 +44,31 @@ function NodeRow({ node, isOffline, inventory }) {
       {/* Node info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className={`font-mono text-xs font-semibold truncate ${isOffline ? 'text-cyber-red glow-red' : 'text-white'}`}>
+          <span className={`font-sans text-xs font-bold truncate ${isOffline ? 'text-cyber-red' : 'text-white'}`}>
             {node.name}
           </span>
           {isOffline && (
             <motion.span
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex-shrink-0 px-1.5 py-0.5 bg-cyber-red/20 border border-cyber-red/40 rounded text-[9px] font-mono text-cyber-red tracking-wider"
+              className="flex-shrink-0 px-1.5 py-0.5 bg-cyber-red/20 border border-cyber-red/30 rounded-md text-[9px] font-sans font-bold text-cyber-red tracking-wider"
             >
               OFFLINE
             </motion.span>
           )}
         </div>
 
-        <div className="flex items-center gap-2 font-mono text-[10px] text-cyber-gray">
+        <div className="flex items-center gap-2 font-sans text-[10px] text-cyber-gray">
           <span>{node.region?.toUpperCase()}</span>
-          <span className="text-[#1a1a2e]">│</span>
+          <span className="text-cyber-border">│</span>
           <span>⚡ {node.throughput}</span>
         </div>
 
-        <div className="mt-1 flex flex-wrap gap-1">
+        <div className="mt-2 flex flex-wrap gap-1.5">
           {(productNames.length ? productNames : ['—']).map((p) => (
             <span
               key={p}
-              className={`px-1.5 py-0.5 rounded text-[9px] font-mono border ${
+              className={`px-2 py-0.5 rounded-md text-[9px] font-sans font-medium border ${
                 isOffline
                   ? 'bg-cyber-red/10 border-cyber-red/20 text-cyber-red/80'
                   : 'bg-cyber-cyan/5 border-cyber-cyan/15 text-cyber-cyan/70'
@@ -81,8 +81,8 @@ function NodeRow({ node, isOffline, inventory }) {
       </div>
 
       {/* Risk label derived from vulnerabilityScore */}
-      <div className={`flex-shrink-0 text-right font-mono text-[10px] ${risk.color}`}>
-        <div className="text-cyber-gray/40 text-[9px]">RISK</div>
+      <div className={`flex-shrink-0 text-right font-sans text-[10px] ${risk.color} font-bold`}>
+        <div className="text-cyber-gray/60 text-[9px] font-semibold">RISK</div>
         <div>{risk.label}</div>
       </div>
 
@@ -237,11 +237,11 @@ export default function NetworkStatusViewer({ chaosState, nodes, inventory }) {
           </AnimatePresence>
 
           {/* Node Labels */}
-          <text x="85%" y="25%" dx={10} dy={3} textAnchor="start" className="font-mono text-[9px]" fill="#8892a4">SZX</text>
-          <text x="50%" y="15%" dx={0} dy={-10} textAnchor="middle" className="font-mono text-[9px]" fill="#8892a4">CLOUD</text>
-          <text x="25%" y="45%" dx={-10} dy={3} textAnchor="end" className="font-mono text-[9px]" fill="#8892a4">BOM</text>
-          <text x="35%" y="75%" dx={-10} dy={3} textAnchor="end" className="font-mono text-[9px]" fill="#8892a4">BLR</text>
-          <text x="75%" y="80%" dx={10} dy={3} textAnchor="start" className="font-mono text-[9px]" fill="#8892a4">SGP</text>
+          <text x="85%" y="25%" dx={10} dy={3} textAnchor="start" className="font-sans text-[9px] font-bold" fill="#8892a4">SZX</text>
+          <text x="50%" y="15%" dx={0} dy={-10} textAnchor="middle" className="font-sans text-[9px] font-bold" fill="#8892a4">CLOUD</text>
+          <text x="25%" y="45%" dx={-10} dy={3} textAnchor="end" className="font-sans text-[9px] font-bold" fill="#8892a4">BOM</text>
+          <text x="35%" y="75%" dx={-10} dy={3} textAnchor="end" className="font-sans text-[9px] font-bold" fill="#8892a4">BLR</text>
+          <text x="75%" y="80%" dx={10} dy={3} textAnchor="start" className="font-sans text-[9px] font-bold" fill="#8892a4">SGP</text>
         </svg>
       </div>
 
@@ -258,8 +258,8 @@ export default function NetworkStatusViewer({ chaosState, nodes, inventory }) {
       </div>
 
       {/* Connection status footer */}
-      <div className="panel-header border-t border-b-0 border-[#1a1a2e] mt-auto">
-        <span className="text-[10px]">
+      <div className="panel-header border-t border-b-0 border-[#27272a]/40 mt-auto">
+        <span className="font-sans text-[10px] font-semibold tracking-wide text-cyber-gray-light">
           {bengaluruOffline
             ? '⚠ REROUTING: Mumbai → Singapore → Clients'
             : '✓ All nodes nominal — Mesh topology active'}

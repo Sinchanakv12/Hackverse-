@@ -147,10 +147,10 @@ export default function App() {
       <Header chaosState={chaosState} onReset={handleReset} />
 
       {/* ── Main Dashboard Grid ───────────────────────────────────────── */}
-      <main className="flex-1 grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-px bg-[#1a1a2e] p-px">
+      <main className="flex-1 grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6 bg-[#09090b] p-6">
 
         {/* ── LEFT COLUMN ───────────────────────────────────────────── */}
-        <div className="flex flex-col gap-px bg-[#1a1a2e]">
+        <div className="flex flex-col gap-6">
           {/* Chaos Injector */}
           <ChaosInjector
             chaosState={chaosState}
@@ -166,7 +166,7 @@ export default function App() {
         </div>
 
         {/* ── RIGHT COLUMN ──────────────────────────────────────────── */}
-        <div className="flex flex-col gap-px bg-[#1a1a2e]">
+        <div className="flex flex-col gap-6">
           {/* Financial Impact Meter — uses dynamic projectedLoss from backend */}
           <FinancialImpactMeter
             chaosState={chaosState}
@@ -175,7 +175,7 @@ export default function App() {
           />
 
           {/* Bottom row: Agent Console + Campaign Card */}
-          <div className="flex-1 grid grid-cols-1 xl:grid-cols-2 gap-px bg-[#1a1a2e]">
+          <div className="flex-1 grid grid-cols-1 xl:grid-cols-2 gap-6">
             <AgentConsole logs={agentLogs} chaosState={chaosState} />
             <CampaignCard campaign={campaign} chaosState={chaosState} />
           </div>
