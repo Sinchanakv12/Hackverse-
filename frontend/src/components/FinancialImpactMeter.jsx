@@ -2,25 +2,29 @@ import { useEffect, useRef, useState } from 'react'
 import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
 
 function formatCurrency(value) {
-  if (value >= 1_000_000) {
-    return `$${(value / 1_000_000).toFixed(2)}M`
+  const isNegative = value < 0
+  const abs = Math.abs(value)
+  let result = ''
+  if (abs >= 1_000_000) {
+    result = `$${(abs / 1_000_000).toFixed(2)}M`
+  } else if (abs >= 1_000) {
+    result = `$${(abs / 1_000).toFixed(1)}K`
+  } else {
+    result = `$${Math.round(abs).toLocaleString()}`
   }
-  if (value >= 1_000) {
-    return `$${(value / 1_000).toFixed(1)}K`
-  }
-  return `$${Math.round(value).toLocaleString()}`
+  return isNegative ? `-${result}` : result
 }
 
 // Animated counter that counts between two values
 function AnimatedCounter({ value, duration = 2.5, className }) {
   const motionValue = useMotionValue(0)
-  const [display, setDisplay] = useState('$0.00M')
+  const [display, setDisplay] = useState('$0')
   const prevValue = useRef(0)
 
   useEffect(() => {
     const controls = animate(motionValue, value, {
       duration,
-      ease: value > prevValue.current ? [0.16, 1, 0.3, 1] : 'easeOut',
+      ease: Math.abs(value) > Math.abs(prevValue.current) ? [0.16, 1, 0.3, 1] : 'easeOut',
       onUpdate: (v) => setDisplay(formatCurrency(v)),
     })
     prevValue.current = value
@@ -116,29 +120,29 @@ export default function FinancialImpactMeter({ chaosState, projectedLoss, recove
                 <div className="text-[10px] font-sans text-text-secondary font-bold tracking-wider mb-3 uppercase">
                   Swarm Financial Optimization Breakdown
                 </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="border border-emerald-500/10 bg-emerald-500/5 rounded-lg p-2.5 text-center transition-all hover:bg-emerald-500/10">
+                <div className="grid grid-cols-3 gap-3 bg-slate-50 border border-slate-200 rounded-md p-3">
+                  <div className="text-center">
                     <div className="font-mono text-sm font-bold text-status-safe">
-                      +{formatCurrency(campaign.financialBreakdown.avoidedPenalties)}
+                      +<AnimatedCounter value={campaign.financialBreakdown.avoidedPenalties} duration={2.5} />
                     </div>
                     <div className="font-sans text-[9px] text-text-secondary font-semibold mt-1 uppercase tracking-wider">
-                      Avoided Penalties
+                      SLA Penalties Avoided
                     </div>
                   </div>
-                  <div className="border border-emerald-500/10 bg-emerald-500/5 rounded-lg p-2.5 text-center transition-all hover:bg-emerald-500/10">
+                  <div className="text-center border-l border-r border-slate-200 px-2">
                     <div className="font-mono text-sm font-bold text-status-safe">
-                      +{formatCurrency(campaign.financialBreakdown.salvagedCOGS)}
+                      +<AnimatedCounter value={campaign.financialBreakdown.salvagedCOGS} duration={2.5} />
                     </div>
                     <div className="font-sans text-[9px] text-text-secondary font-semibold mt-1 uppercase tracking-wider">
-                      Salvaged COGS
+                      Inventory Value Salvaged
                     </div>
                   </div>
-                  <div className="border border-rose-500/10 bg-rose-500/5 rounded-lg p-2.5 text-center transition-all hover:bg-rose-500/10">
+                  <div className="text-center">
                     <div className="font-mono text-sm font-bold text-status-danger">
-                      {formatCurrency(campaign.financialBreakdown.newFreightCosts)}
+                      <AnimatedCounter value={campaign.financialBreakdown.newFreightCosts} duration={2.5} />
                     </div>
                     <div className="font-sans text-[9px] text-text-secondary font-semibold mt-1 uppercase tracking-wider">
-                      New Freight Costs
+                      Expedited Freight Cost
                     </div>
                   </div>
                 </div>

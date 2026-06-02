@@ -12,8 +12,9 @@ const PORT = process.env.PORT || 5000;
 
 // ── Middleware ──────────────────────────────────────────────────────────────
 app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:3000"],
-  methods: ["GET", "POST"],
+  origin: true,   // allow all origins — restrict to your Vercel URL in production if needed
+  methods: ['GET', 'POST'],
+  credentials: false,
 }));
 app.use(express.json());
 

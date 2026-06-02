@@ -1,146 +1,98 @@
-# CHAOS ARCHITECT 
-### Supply Chain Resilience AI — Setup Guide
+# ⚡ CHAOS ARCHITECT
+### Supply Chain Resilience AI — Hackathon Project
+
+> A real-time AI-powered supply chain disruption simulator with live data feeds, cascade failure detection, financial impact modeling, and autonomous mitigation.
 
 ---
 
-## Prerequisites
+## ✨ Features
 
-You need **Node.js** installed. Download it from: **https://nodejs.org** (LTS version recommended).
+- 🗺️ **Live Scenario Map** — 9-node interactive network with real-time crisis visualization
+- 📡 **Live Data Feed** — SSE stream: live sensor data, weather, traffic & security events
+- 🤖 **Auto-Pilot Mitigation** — AI triggers countermeasures automatically when risk ≥ 85%
+- 🌊 **Cascade Engine** — Domino failure propagation across adjacent supply nodes
+- 💸 **Financial Sandbox** — Live cost ticker with margin, insurance & penalty sliders
+- 📊 **A/B Run Comparison** — Side-by-side simulation performance analysis
+- 💬 **AI Copilot Chat** — Natural language command interface
+- 🔥 **81 Chaos Scenarios** — Air, Natural Disasters, Cyber, Labor, Maritime, Pandemic, Climate, Financial, Rail/Road
 
-After installing, verify with:
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18 + Vite, Framer Motion, Lucide Icons |
+| Backend  | Node.js + Express, Server-Sent Events (SSE) |
+| AI       | Anthropic Claude / Google Gemini (optional) |
+
+---
+
+## 🚀 Running Locally
+
 ```bash
-node --version   # Should print v18+ or v20+
-npm --version    # Should print 9+
+# Backend (http://localhost:5000)
+cd backend && npm install && node server.js
+
+# Frontend (http://localhost:5173)
+cd frontend && npm install && npm run dev
 ```
 
+**Optional AI key** — create `backend/.env`:
+```
+ANTHROPIC_API_KEY=sk-ant-...
+```
+Without a key the app runs in **High-Fidelity Mock** mode (fully functional).
+
 ---
 
-## Project Structure
+## ☁️ Deploying to Production
+
+### Backend → [Railway](https://railway.app)
+
+1. New Project → Deploy from GitHub → select `backend/` folder
+2. Railway auto-detects Node.js, runs `node server.js`
+3. Copy the public Railway URL
+
+### Frontend → [Vercel](https://vercel.com)
+
+1. New Project → Import GitHub → set **Root Directory** to `frontend`
+2. Add environment variable:
+   ```
+   VITE_API_BASE_URL = https://YOUR-RAILWAY-URL.up.railway.app
+   ```
+3. Click Deploy ✅
+
+---
+
+## 🗂️ Project Structure
 
 ```
 hack/
 ├── backend/
-│   ├── server.js                    ← Express entry point
-│   ├── demoData.js                  ← Supply chain mock data
-│   ├── package.json
-│   ├── .env.example                 ← Copy to .env and add API keys
-│   ├── routes/
-│   │   └── analyze.js               ← HTTP route (thin layer only)
-│   └── services/
-│       └── agentOrchestrator.js     ← All agentic business logic
+│   ├── server.js                  # Express entry + CORS
+│   ├── demoData.js                # Supply chain data generator
+│   ├── railway.json               # Railway deployment config
+│   ├── routes/analyze.js          # API + SSE /api/live-stream
+│   └── services/agentOrchestrator.js  # ReAct AI + Dijkstra routing
 │
 └── frontend/
-    ├── index.html
-    ├── vite.config.js               ← Proxies /api to backend:5000
-    ├── tailwind.config.js
-    ├── postcss.config.js
-    ├── package.json
+    ├── vercel.json                # Vercel SPA config
+    ├── .env                       # Local env (VITE_API_BASE_URL)
     └── src/
-        ├── main.jsx
-        ├── App.jsx                  ← State machine & layout
-        ├── index.css                ← Cyberpunk global styles
+        ├── App.jsx
+        ├── scenariosData.js       # 81 chaos scenarios
+        ├── context/ChaosContext.jsx
         └── components/
-            ├── Header.jsx           ← Branding + reset button
-            ├── NetworkStatusViewer.jsx
-            ├── FinancialImpactMeter.jsx
-            ├── ChaosInjector.jsx
-            ├── AgentConsole.jsx
-            └── CampaignCard.jsx
+            ├── LiveFeed.jsx           # 📡 Real-time SSE dashboard
+            ├── DynamicTransitMap.jsx  # 🗺️ Live map
+            ├── CopilotChat.jsx        # 💬 AI chat
+            ├── FinancialSandbox.jsx   # 💸 Cost modeling
+            ├── CascadeEngine.jsx      # 🌊 Domino failures
+            ├── ComparisonView.jsx     # 📊 A/B comparison
+            └── LivePredictor.jsx      # 🤖 Risk + Auto-Pilot
 ```
 
 ---
 
-## Running the App (Two terminals)
-
-### Terminal 1 — Backend
-
-```bash
-cd hack/backend
-npm install
-node server.js
-```
-
-Backend will start at **http://localhost:5000**
-
-### Terminal 2 — Frontend
-
-```bash
-cd hack/frontend
-npm install
-npm run dev
-```
-
-Frontend will start at **http://localhost:5173**
-
-Open **http://localhost:5173** in your browser.
-
----
-
-## (Optional) Enable Live AI
-
-Copy the env template and add your API key:
-
-```bash
-cd hack/backend
-copy .env.example .env
-```
-
-Edit `.env`:
-```
-# Option 1: Anthropic Claude
-ANTHROPIC_API_KEY=sk-ant-...
-
-# Option 2: Google Gemini  
-GEMINI_API_KEY=AIza...
-```
-
-If no key is provided, the app runs in **High-Fidelity Mock Mode** (perfect for demos).
-
----
-
-## The Demo Flow
-
-1. Open the dashboard — all 5 nodes show **ONLINE**, revenue meter at **$0**
-2. Click **"⚡ INJECT CHAOS: BENGALURU FLOOD SCENARIO"**
-3. Watch:
-   - Bengaluru node turns **red (OFFLINE)**
-   - Financial meter counts up to **$9,000,000**
-   - Agent Console begins streaming live execution logs
-4. Agent completes — Campaign card fades in with recovery strategy
-5. Financial meter counts **back down** by $5.8M recovered
-6. Click **"▶ DEPLOY CAMPAIGN"** → Success animation (green checkmark + "REALLOCATION COMPLETE")
-7. Use the **↺** icon in the header to reset for QA / repeat demos
-
----
-
-## Architecture
-
-```
-Frontend (React/Vite)
-       │
-       │  POST /api/resolve-crisis
-       ▼
-routes/analyze.js  (HTTP only — validates, delegates)
-       │
-       │  orchestrator.run()
-       ▼
-services/agentOrchestrator.js  (all business logic)
-   ├── Step 1: TRIAGE  — Parse disrupted node, calculate loss
-   ├── Step 2: SCAN    — Find utility-equivalent safe inventory  
-   ├── Step 3: BUNDLE  — Compute optimal bundle + pricing
-   ├── Step 4: SHAPE   — Call Claude / Gemini / Mock Agent
-   └── Step 5: FORMAT  — Return structured campaign + logs
-```
-
-## Data Model (Business Logic)
-
-| Product | Status | Value | Utility |
-|---------|--------|-------|---------|
-| UltraBook Pro 15" (Enterprise) | ❌ DISRUPTED | $1,800/unit | Enterprise compute |
-| Creator Pro 14" (Professional) | ✅ SAFE (Mumbai) | $1,550/unit | Professional compute |
-| CloudDesk Pro 1-Year License | ✅ SAFE (Digital) | $420/unit | Cloud compute |
-
-**Bundle**: Creator Pro 14" + CloudDesk Pro @ 8% discount = **$1,812.40/unit**  
-**Recovery ceiling**: 3,200 units × $1,812.40 = **~$5.8M** of a $9M loss
-
-This is economically coherent substitution: all three products serve the same enterprise compute utility class.
+## 🏆 Built for HackVerse Hackathon

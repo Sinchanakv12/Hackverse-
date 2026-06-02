@@ -2,9 +2,12 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
+import { ChaosProvider } from './context/ChaosContext'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    <ChaosProvider>
+      <App />
+    </ChaosProvider>
   </React.StrictMode>,
 )

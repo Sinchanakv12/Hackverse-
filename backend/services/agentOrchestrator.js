@@ -196,10 +196,15 @@ function createSessionTools(data) {
      * Locates the nearest open refrigerated or high-security logistics facility.
      */
     tool_locate_nearest_cold_hub() {
+      const activeScenarioKey = Object.keys(data.crisisScenarios)[0];
+      const activeScenario = data.crisisScenarios[activeScenarioKey];
+      const affectedNodeId = activeScenario?.affectedNodeId || 'bengaluru';
+      const targetHubId = affectedNodeId === "mumbai" ? "delhi" : "mumbai";
+      const targetHub = data.nodes.find(n => n.id === targetHubId);
       return {
-        nearestHubId: "mumbai",
-        name: "Mumbai Logistics Hub",
-        distanceKm: 980,
+        nearestHubId: targetHubId,
+        name: targetHub?.name || "Mumbai Logistics Hub",
+        distanceKm: affectedNodeId === "mumbai" ? 1400 : 980,
         refrigeratedBaySlotsAvailable: 14,
         status: "FULLY OPERATIONAL",
         temperatureCelsius: "4°C",
@@ -344,7 +349,8 @@ async function run(crisisNodeId, onLog, simulationConfig) {
   );
   for (const route of affectedRoutes) {
     await observe(RA, `Transit Route compromised: [${route.id}] (${route.source} ➔ ${route.target})`);
-    await observe(RA, `  Traffic Index: ${route.crisis.trafficIndex} | Delay: ${route.crisis.delay} (NH48 CLOSED)`);
+    const roadblockInfo = route.crisis.roadblocks?.[0] ? `(${route.crisis.roadblocks[0].type} at ${route.crisis.roadblocks[0].location})` : '';
+    await observe(RA, `  Traffic Index: ${route.crisis.trafficIndex} | Delay: ${route.crisis.delay} ${roadblockInfo}`);
   }
 
   await thought(RA, `Querying the inventory database to determine the exact quantity and SKU details of stranded assets.`);
@@ -409,6 +415,125 @@ async function run(crisisNodeId, onLog, simulationConfig) {
 
   const accuracyEval = tools.tool_calculate_prediction_accuracy(constraints);
   await observe(LR, `Asset alignment evaluation: confidence score calculated at ${accuracyEval.confidence.toFixed(1)}% | Reason: ${accuracyEval.reasoning}`);
+
+  // ── NEXT-GEN DIJKSTRA ROUTING SOLVER ──
+  await thought(LR, `Initiating Dijkstra shortest-path solver on network topology graph to find optimal route.`);
+  
+  const fallbackHubNodeId = crisisNodeId === "mumbai" ? "delhi" : "mumbai";
+
+  const defaultTravelTimes = {
+    "route-blr-mum": 16,
+    "route-del-mum": 4,
+    "route-chn-mum": 20,
+    "route-kol-mum": 30,
+    "route-pun-mum": 3,
+    "route-hyd-mum": 12,
+    "route-szn-sgp": 48,
+    "route-sgp-mum": 72
+  };
+
+  const graph = {};
+  
+  // Initialize nodes in graph
+  data.nodes.forEach(n => {
+    graph[n.id] = {};
+  });
+
+  // Populate travel times based on active crisis state
+  data.transitRoutes.forEach(route => {
+    const baseTime = defaultTravelTimes[route.id] || 15;
+    const isAffected = route.source === crisisNodeId || route.target === crisisNodeId;
+    
+    let travelTime = baseTime;
+    if (isAffected) {
+      const delayMatch = route.crisis.delay.match(/\+(\d+)/);
+      const delayHrs = delayMatch ? parseInt(delayMatch[1], 10) : 24;
+      travelTime += delayHrs;
+    }
+    
+    if (!graph[route.source]) graph[route.source] = {};
+    if (!graph[route.target]) graph[route.target] = {};
+    
+    graph[route.source][route.target] = travelTime;
+    graph[route.target][route.source] = travelTime;
+  });
+
+  // Connect to digital-delivery bypass
+  if (graph[fallbackHubNodeId]) {
+    graph[fallbackHubNodeId]["digital-delivery"] = 5;
+  }
+  if (graph["digital-delivery"]) {
+    graph["digital-delivery"][fallbackHubNodeId] = 5;
+  }
+
+  const dijkstra = (g, start, end) => {
+    const distances = {};
+    const prev = {};
+    const queue = [];
+
+    for (let node in g) {
+      distances[node] = Infinity;
+      prev[node] = null;
+      queue.push(node);
+    }
+    distances[start] = 0;
+
+    while (queue.length > 0) {
+      queue.sort((a, b) => distances[a] - distances[b]);
+      const current = queue.shift();
+
+      if (current === end) break;
+      if (distances[current] === Infinity) break;
+
+      for (let neighbor in g[current]) {
+        const alt = distances[current] + g[current][neighbor];
+        if (alt < distances[neighbor]) {
+          distances[neighbor] = alt;
+          prev[neighbor] = current;
+        }
+      }
+    }
+
+    const path = [];
+    let curr = end;
+    while (curr !== null) {
+      path.unshift(curr);
+      curr = prev[curr];
+    }
+    return { path, distance: distances[end] };
+  };
+
+  const roadRoute = dijkstra(graph, crisisNodeId, fallbackHubNodeId);
+
+  // Bypass graph: optimized routes using active telemetry
+  const bypassGraph = JSON.parse(JSON.stringify(graph));
+  data.transitRoutes.forEach(route => {
+    if (route.source === crisisNodeId || route.target === crisisNodeId) {
+      const baseTime = defaultTravelTimes[route.id] || 15;
+      const telemetryDelayReduction = constraints.telemetryActive !== false ? 0.15 : 0.45;
+      const delayMatch = route.crisis.delay.match(/\+(\d+)/);
+      const delayHrs = delayMatch ? parseInt(delayMatch[1], 10) : 24;
+      const adjustedDelay = Math.round(delayHrs * telemetryDelayReduction);
+      
+      bypassGraph[route.source][route.target] = baseTime + adjustedDelay;
+      bypassGraph[route.target][route.source] = baseTime + adjustedDelay;
+    }
+  });
+
+  const bypassRoute = dijkstra(bypassGraph, crisisNodeId, fallbackHubNodeId);
+
+  // Append digital delivery if that's the destination target
+  if (roadRoute.path.length > 0 && graph[fallbackHubNodeId]["digital-delivery"]) {
+    roadRoute.path.push("digital-delivery");
+    roadRoute.distance += 5;
+  }
+  if (bypassRoute.path.length > 0 && bypassGraph[fallbackHubNodeId]["digital-delivery"]) {
+    bypassRoute.path.push("digital-delivery");
+    bypassRoute.distance += 5;
+  }
+
+  await observe(LR, `Dijkstra standard route path: ${roadRoute.path.map(p => p.toUpperCase()).join(" ➔ ")} (Total latency: ${roadRoute.distance} hrs)`);
+  await observe(LR, `Dijkstra alternate bypass path: ${bypassRoute.path.map(p => p.toUpperCase()).join(" ➔ ")} (Total latency: ${bypassRoute.distance} hrs using localized redirect)`);
 
   await log(`[AGENT: LOGISTICS ROUTER] Locating assets. Reefer fleet secured in Mumbai. Handing off to Finance...`);
   await divider();
@@ -481,6 +606,16 @@ async function run(crisisNodeId, onLog, simulationConfig) {
       avoidedPenalties: 450000,
       salvagedCOGS: 2100000,
       newFreightCosts: -85000
+    },
+    routePathways: {
+      standard: {
+        path: roadRoute.path,
+        duration: roadRoute.distance
+      },
+      bypass: {
+        path: bypassRoute.path,
+        duration: bypassRoute.distance
+      }
     }
   };
 }

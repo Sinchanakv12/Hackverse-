@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
+import { useChaos } from '../context/ChaosContext'
 
 function formatCurrency(n) {
   if (!n) return '$0'
@@ -9,6 +10,7 @@ function formatCurrency(n) {
 
 export default function CampaignCard({ campaign, chaosState, deployed, setDeployed, onAuthorize }) {
   const isResolved = chaosState === 'resolved'
+  const { sandboxDiscount, setSandboxDiscount, setCampaign } = useChaos()
 
   return (
     <div className="panel flex flex-col min-h-[280px]">
@@ -92,52 +94,74 @@ export default function CampaignCard({ campaign, chaosState, deployed, setDeploy
               {/* Campaign title */}
               <div>
                 <div className="font-sans text-[9px] text-text-secondary uppercase tracking-widest mb-1.5 font-semibold">
-                  Campaign Title
+                  Campaign Title (Editable)
                 </div>
-                <h2 className="font-sans font-extrabold text-sm text-accent-blue leading-tight">
-                  {campaign.campaignTitle}
-                </h2>
+                <input
+                  type="text"
+                  value={campaign.campaignTitle || ''}
+                  onChange={(e) => setCampaign({ ...campaign, campaignTitle: e.target.value })}
+                  className="w-full font-sans font-extrabold text-xs text-accent-blue leading-tight bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none focus:ring-1 focus:ring-accent-blue focus:border-accent-blue transition-all"
+                />
               </div>
 
               {/* Target audience */}
               <div>
                 <div className="font-sans text-[9px] text-text-secondary uppercase tracking-widest mb-1.5 font-semibold">
-                  Target Audience
+                  Target Audience (Editable)
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {(campaign.targetAudience || '').split(',').slice(0, 3).map((seg, i) => (
-                    <span
-                      key={i}
-                      className="px-2 py-0.5 border border-accent-blue/20 bg-accent-blue/5 rounded-md text-[10px] font-sans text-accent-blue/80 font-medium"
-                    >
-                      {seg.trim()}
-                    </span>
-                  ))}
-                </div>
+                <input
+                  type="text"
+                  value={campaign.targetAudience || ''}
+                  onChange={(e) => setCampaign({ ...campaign, targetAudience: e.target.value })}
+                  className="w-full font-sans font-semibold text-[10px] text-slate-600 bg-slate-50 border border-slate-200 rounded-lg p-2 outline-none focus:ring-1 focus:ring-accent-blue focus:border-accent-blue transition-all"
+                />
               </div>
 
-              {/* Recovery stat */}
-              <div className="border border-status-safe/20 bg-status-safe/5 rounded-lg p-3.5 flex items-center justify-between">
-                <div>
-                  <div className="font-sans text-[9px] text-text-secondary uppercase tracking-widest font-semibold">Projected Recovery</div>
-                  <div className="font-mono text-xl font-bold text-status-safe">
-                    {formatCurrency(campaign.recoveredRevenue)}
-                  </div>
+              {/* ROI Sandbox Control Slider */}
+              <div className="border border-slate-200 bg-slate-50/50 rounded-lg p-3 space-y-2">
+                <div className="flex items-center justify-between font-sans text-[9px] text-text-secondary uppercase tracking-widest font-semibold">
+                  <span>ROI Sandbox & Pricing Optimizer</span>
+                  <span className="text-accent-blue font-bold">Active</span>
                 </div>
-                <div className="text-right">
-                  <div className="font-sans text-[9px] text-text-secondary uppercase tracking-widest font-semibold">Bundle Discount</div>
-                  <div className="font-sans text-sm font-bold text-status-warning">8% OFF</div>
+                <div className="flex items-center justify-between font-sans text-xs">
+                  <span className="text-text-secondary">Bundle Discount:</span>
+                  <span className="font-bold text-status-warning font-mono">{sandboxDiscount}% OFF</span>
+                </div>
+                <input
+                  type="range"
+                  min="5"
+                  max="25"
+                  value={sandboxDiscount}
+                  onChange={(e) => setSandboxDiscount(parseInt(e.target.value))}
+                  className="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-accent-blue"
+                />
+                <div className="flex items-center justify-between border-t border-slate-200/50 pt-2 mt-1">
+                  <div>
+                    <div className="font-sans text-[8px] text-text-secondary uppercase tracking-widest">Sandboxed Revenue</div>
+                    <div className="font-mono text-base font-bold text-status-safe">
+                      {formatCurrency(campaign.recoveredRevenue * (1 + (sandboxDiscount - 8) * 0.015))}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-sans text-[8px] text-text-secondary uppercase tracking-widest">Demand Elasticity</div>
+                    <div className="font-sans text-[10px] font-semibold text-accent-blue">
+                      {sandboxDiscount > 15 ? 'High Volume (+24%)' : sandboxDiscount > 8 ? 'Moderate (+12%)' : 'Baseline'}
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* Marketing copy */}
-              <div className="flex-1">
+              <div className="flex-grow flex flex-col">
                 <div className="font-sans text-[9px] text-text-secondary uppercase tracking-widest mb-1.5 font-semibold">
-                  Marketing Copy
+                  Marketing Copy (Editable)
                 </div>
-                <div className="font-sans text-[11px] text-text-primary leading-relaxed line-clamp-6 overflow-hidden bg-[#09090b]/20 p-2 border border-border-subtle/30 rounded-lg">
-                  {campaign.marketingCopy}
-                </div>
+                <textarea
+                  value={campaign.marketingCopy || ''}
+                  onChange={(e) => setCampaign({ ...campaign, marketingCopy: e.target.value })}
+                  rows={4}
+                  className="w-full flex-grow font-sans text-[10px] text-slate-800 leading-relaxed bg-[#FAFBFD] p-2 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-accent-blue focus:border-accent-blue transition-all resize-none"
+                />
               </div>
 
               {/* Deploy button */}

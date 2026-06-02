@@ -16,46 +16,46 @@ export default function WeatherTelemetry({ weather, chaosState }) {
       {/* 2x2 Weather Metrics Grid */}
       <div className="grid grid-cols-2 gap-3">
         {/* Condition */}
-        <div className="bg-[#09090b]/40 border border-border-subtle p-3 rounded-lg flex items-center gap-3">
+        <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg flex items-center gap-3">
           <div className="text-accent-blue/80">
             <Cloud className="w-5 h-5" />
           </div>
           <div>
             <div className="font-sans text-[9px] text-text-secondary uppercase tracking-wider font-semibold">Condition</div>
-            <div className={`font-mono text-xs font-semibold ${isIdle ? 'text-text-primary' : 'text-status-danger'}`}>{condition}</div>
+            <div className={`font-mono text-xs font-semibold ${isIdle ? 'text-slate-800' : 'text-status-danger'}`}>{condition}</div>
           </div>
         </div>
 
         {/* Temperature */}
-        <div className="bg-[#09090b]/40 border border-border-subtle p-3 rounded-lg flex items-center gap-3">
+        <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg flex items-center gap-3">
           <div className="text-accent-blue/80">
             <Thermometer className="w-5 h-5" />
           </div>
           <div>
             <div className="font-sans text-[9px] text-text-secondary uppercase tracking-wider font-semibold">Temperature</div>
-            <div className="font-mono text-xs font-semibold text-text-primary">{temp}</div>
+            <div className="font-mono text-xs font-semibold text-slate-800">{temp}</div>
           </div>
         </div>
 
         {/* Wind Speed */}
-        <div className="bg-[#09090b]/40 border border-border-subtle p-3 rounded-lg flex items-center gap-3">
+        <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg flex items-center gap-3">
           <div className="text-accent-blue/80">
             <Wind className="w-5 h-5" />
           </div>
           <div>
-            <div className="font-sans text-[9px] text-text-secondary uppercase tracking-wider font-semibold">Wind Speed</div>
-            <div className="font-mono text-xs font-semibold text-text-primary">{wind}</div>
+            <div className="font-sans text-[9px] text-text-secondary tracking-wider font-semibold uppercase">Wind Speed</div>
+            <div className="font-mono text-xs font-semibold text-slate-800">{wind}</div>
           </div>
         </div>
 
         {/* Precipitation */}
-        <div className="bg-[#09090b]/40 border border-border-subtle p-3 rounded-lg flex items-center gap-3">
+        <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg flex items-center gap-3">
           <div className="text-accent-blue/80">
             <CloudRain className="w-5 h-5" />
           </div>
           <div>
-            <div className="font-sans text-[9px] text-text-secondary uppercase tracking-wider font-semibold">Precipitation</div>
-            <div className="font-mono text-xs font-semibold text-text-primary">{precipitation}</div>
+            <div className="font-sans text-[9px] text-text-secondary tracking-wider font-semibold uppercase">Precipitation</div>
+            <div className="font-mono text-xs font-semibold text-slate-800">{precipitation}</div>
           </div>
         </div>
       </div>

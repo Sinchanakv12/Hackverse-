@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import WeatherTelemetry from './WeatherTelemetry'
+import { scenarios } from '../scenariosData'
 
 export default function ChaosInjector({ chaosState, onInjectChaos, error, weather, simulationConfig }) {
   const isIdle = chaosState === 'idle'
@@ -12,21 +13,23 @@ export default function ChaosInjector({ chaosState, onInjectChaos, error, weathe
 
   let cargoName = "UltraBook Pro 15\""
   let cargoUnit = "units"
-  let subTitle = "BENGALURU FLOOD SCENARIO"
 
   if (isFood) {
     cargoName = "Organic Produce Pallets"
     cargoUnit = "pallets"
-    subTitle = "AVOCADO SUPPLY COLD-CHAIN DISRUPTION"
   } else if (isHealthcare) {
     cargoName = "mRNA Vaccine Batches"
     cargoUnit = "batches"
-    subTitle = "VACCINE TEMPERATURE DISRUPTION"
   } else if (isHazmat) {
     cargoName = "Industrial Solvents (Class 3)"
     cargoUnit = "units"
-    subTitle = "CHEMICAL CONTAINMENT DISRUPTION"
   }
+
+  const activeScenario = scenarios.find(s => s.id === simulationConfig?.scenario) || scenarios.find(s => s.id === 'bengaluru-flood') || scenarios[0]
+  const targetNodeId = activeScenario.affectedNodeId.toUpperCase()
+  const customDescription = (activeScenario.description || "")
+    .replace("{cargoName}", cargoName)
+    .replace("{cargoUnit}", cargoUnit)
 
   return (
     <div className="panel">
@@ -36,7 +39,7 @@ export default function ChaosInjector({ chaosState, onInjectChaos, error, weathe
         <span>Chaos Injection Module</span>
         <div className="flex-1" />
         <span className="text-[10px] text-text-secondary font-sans font-medium">
-          TARGET: BENGALURU-DC-01
+          TARGET: {targetNodeId}-DC-01
         </span>
       </div>
 
@@ -44,19 +47,19 @@ export default function ChaosInjector({ chaosState, onInjectChaos, error, weathe
         {/* Weather Telemetry */}
         <div>
           <div className="font-sans text-[9px] text-text-secondary uppercase tracking-widest mb-2 font-semibold">
-            Live Weather Telemetry — Bengaluru
+            Live Weather Telemetry — {targetNodeId.charAt(0) + targetNodeId.slice(1).toLowerCase()}
           </div>
           <WeatherTelemetry weather={weather} chaosState={chaosState} />
         </div>
 
         {/* Scenario info */}
         <div className="border border-status-danger/20 bg-status-danger/5 rounded-lg p-4">
-          <div className="font-sans text-[9px] text-status-danger uppercase tracking-widest mb-1.5 font-semibold">Scenario: BENGALURU-FLOOD-CAT4</div>
+          <div className="font-sans text-[9px] text-status-danger uppercase tracking-widest mb-1.5 font-semibold">Scenario: {activeScenario.title}</div>
           <div className="font-sans text-xs text-text-primary leading-relaxed">
-            Simulates a Category 4 monsoon flood disabling the Bengaluru Distribution Center.
+            {customDescription}
             <span className="text-status-danger font-semibold"> 5,000 {cargoUnit}</span> of{' '}
             <span className="text-text-primary font-semibold font-sans">{cargoName}</span> stranded.
-            Est. downtime: <span className="text-status-warning font-semibold">14–21 days</span>.
+            Est. downtime: <span className="text-status-warning font-semibold">{activeScenario.estimatedDowntimeHours} hours ({Math.round(activeScenario.estimatedDowntimeHours / 24)} days)</span>.
           </div>
         </div>
 
