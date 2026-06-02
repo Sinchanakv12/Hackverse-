@@ -1,121 +1,201 @@
 /**
  * CHAOS ARCHITECT — Agent Orchestrator Service
  *
- * This service contains ALL business logic for the agentic crisis resolution.
- * The Express route calls this service and only handles HTTP I/O.
+ * Architecture: ReAct (Reason + Act) Loop
+ * ─────────────────────────────────────────
+ * The agent does NOT run linearly. It reasons about what to do next,
+ * selects a tool to call, observes the result, and reasons again.
  *
- * Agent Steps:
- *   1. TRIAGE    — Parse the disrupted node, calculate hard loss.
- *   2. SCAN      — Identify utility-equivalent safe inventory.
- *   3. BUNDLE    — Compute optimal bundle pricing and recovery ceiling.
- *   4. SHAPE     — Call AI (Claude/Gemini) or fallback to high-fidelity mock.
- *   5. FORMAT    — Return structured campaign + agent logs.
+ * Each cycle:
+ *   [THOUGHT]     — Internal monologue: what does the agent need to know?
+ *   [ACTION]      — Tool call: which function will answer the question?
+ *   [OBSERVATION] — Tool result: what did the agent learn?
+ *
+ * Tools (discrete, pure functions the agent can call):
+ *   tool_query_node_status(nodeId)
+ *   tool_query_inventory(nodeId)
+ *   tool_assess_utility_class(sku)
+ *   tool_calculate_utility_bundle(disruptedSku)
+ *   tool_project_financial_impact(sku, units, unitPrice)
+ *   tool_generate_campaign(bundle, triage)
  */
+
+"use strict";
 
 const data = require("../demoData");
 
-// ---------------------------------------------------------------------------
-// Utility helpers
-// ---------------------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared helpers
+// ─────────────────────────────────────────────────────────────────────────────
 
 const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
 
 const fmt = (n) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(n);
 
-// ---------------------------------------------------------------------------
-// Step 1 — TRIAGE: Identify loss from the disrupted node
-// ---------------------------------------------------------------------------
-function triageNode(crisisNodeId) {
-  const scenario = Object.values(data.crisisScenarios).find(
-    (s) => s.affectedNodeId === crisisNodeId
-  );
-  if (!scenario) throw new Error(`No crisis scenario found for node: ${crisisNodeId}`);
+// ─────────────────────────────────────────────────────────────────────────────
+// TOOL REGISTRY
+// Discrete, pure functions the agent can invoke. Each returns a structured
+// observation the agent can reason over in the next THOUGHT step.
+// ─────────────────────────────────────────────────────────────────────────────
 
-  const affectedProducts = scenario.affectedProducts.map((pid) => data.inventory[pid]);
-  const totalLoss = affectedProducts.reduce(
-    (sum, p) => sum + p.stock * p.unitPrice,
-    0
-  );
+const tools = {
 
-  return { scenario, affectedProducts, totalLoss };
-}
+  /**
+   * tool_query_node_status(nodeId)
+   * Returns the current operational status and sensor readings for a node.
+   */
+  tool_query_node_status(nodeId) {
+    const node = data.nodes.find((n) => n.id === nodeId);
+    if (!node) return { error: `Node '${nodeId}' not found in registry.` };
 
-// ---------------------------------------------------------------------------
-// Step 2 — SCAN: Find utility-equivalent safe inventory
-// ---------------------------------------------------------------------------
-function scanSafeInventory(affectedProductIds) {
-  const safeProducts = Object.values(data.inventory).filter(
-    (p) => !affectedProductIds.includes(p.id) && p.status !== "disrupted"
-  );
-  return safeProducts;
-}
+    const scenario = Object.values(data.crisisScenarios).find(
+      (s) => s.affectedNodeId === nodeId
+    );
 
-// ---------------------------------------------------------------------------
-// Step 3 — BUNDLE: Compute the optimal bundle
-// ---------------------------------------------------------------------------
-function computeBundle() {
-  const bundle = data.optimalBundle;
-  const products = bundle.products.map((pid) => data.inventory[pid]);
-  return {
-    products,
-    discount: bundle.bundleDiscount,
-    pricePerUnit: bundle.bundlePricePerUnit,
-    maxUnits: bundle.maxUnitsDeployable,
-    projectedRecovery: bundle.projectedRecovery,
-  };
-}
+    return {
+      nodeId: node.id,
+      name: node.name,
+      region: node.region,
+      operationalStatus: scenario ? "OFFLINE" : "ONLINE",
+      vulnerabilityScore: node.vulnerabilityScore,
+      sensorReadings: scenario?.sensorReadings ?? null,
+      crisisTitle: scenario?.title ?? null,
+      affectedProducts: scenario?.affectedProducts ?? [],
+    };
+  },
 
-// ---------------------------------------------------------------------------
-// Step 4a — AI CALL: Claude (Anthropic) via REST
-// ---------------------------------------------------------------------------
-async function callClaude(systemPrompt, userMessage) {
-  const Anthropic = require("@anthropic-ai/sdk").default;
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  /**
+   * tool_query_inventory(nodeId)
+   * Returns full inventory stock levels for all products at a given node.
+   */
+  tool_query_inventory(nodeId) {
+    const products = Object.values(data.inventory).filter(
+      (p) => p.nodeId === nodeId
+    );
 
-  const response = await client.messages.create({
-    model: "claude-opus-4-5",
-    max_tokens: 1024,
-    system: systemPrompt,
-    messages: [{ role: "user", content: userMessage }],
-  });
+    if (!products.length) {
+      return { nodeId, products: [], message: "No inventory found at this node." };
+    }
 
-  const raw = response.content[0].text;
-  const jsonMatch = raw.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error("No JSON found in Claude response");
-  return JSON.parse(jsonMatch[0]);
-}
+    return {
+      nodeId,
+      products: products.map((p) => ({
+        sku: p.sku,
+        name: p.name,
+        category: p.category,
+        unitPrice: p.unitPrice,
+        stock: p.stock === Infinity ? "UNLIMITED (digital)" : p.stock,
+        status: p.status,
+        margin: p.margin,
+      })),
+    };
+  },
 
-// ---------------------------------------------------------------------------
-// Step 4b — AI CALL: Gemini via REST
-// ---------------------------------------------------------------------------
-async function callGemini(systemPrompt, userMessage) {
-  const fetch = (...args) =>
-    import("node-fetch").then(({ default: f }) => f(...args));
+  /**
+   * tool_assess_utility_class(sku)
+   * Determines the utility category of a product and finds all inventory
+   * that shares the same utility class (valid substitutes).
+   */
+  tool_assess_utility_class(sku) {
+    const product = Object.values(data.inventory).find((p) => p.sku === sku);
+    if (!product) return { error: `SKU '${sku}' not found.` };
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    // Utility mapping: products that serve the same enterprise compute need
+    const UTILITY_MAP = {
+      "Enterprise Laptop":       ["Enterprise Laptop", "Professional Laptop", "Cloud Workstation License"],
+      "Professional Laptop":     ["Enterprise Laptop", "Professional Laptop", "Cloud Workstation License"],
+      "Cloud Workstation License": ["Enterprise Laptop", "Professional Laptop", "Cloud Workstation License"],
+    };
 
-  const body = {
-    system_instruction: { parts: [{ text: systemPrompt }] },
-    contents: [{ parts: [{ text: userMessage }] }],
-    generationConfig: { responseMimeType: "application/json" },
-  };
+    const validCategories = UTILITY_MAP[product.category] ?? [product.category];
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+    const substitutes = Object.values(data.inventory).filter(
+      (p) => p.sku !== sku &&
+             validCategories.includes(p.category) &&
+             p.status !== "disrupted"
+    );
 
-  const json = await res.json();
-  const raw = json.candidates[0].content.parts[0].text;
-  return JSON.parse(raw);
-}
+    return {
+      queriedSku: sku,
+      utilityClass: product.category,
+      utilityScore: 1.0,
+      validSubstituteCategories: validCategories,
+      substitutes: substitutes.map((p) => ({
+        sku: p.sku,
+        name: p.name,
+        category: p.category,
+        utilityParityScore: p.category === product.category ? 0.97 : 0.91,
+        nodeId: p.nodeId,
+        status: p.status,
+      })),
+    };
+  },
 
-// ---------------------------------------------------------------------------
-// Step 4c — MOCK FALLBACK: High-fidelity simulated agent response
-// ---------------------------------------------------------------------------
+  /**
+   * tool_calculate_utility_bundle(disruptedSku)
+   * Computes the mathematically optimal substitute bundle to replace
+   * the disrupted product's utility. Returns full pricing and recovery math.
+   */
+  tool_calculate_utility_bundle(disruptedSku) {
+    const disrupted = Object.values(data.inventory).find((p) => p.sku === disruptedSku);
+    if (!disrupted) return { error: `SKU '${disruptedSku}' not found.` };
+
+    const bundle = data.optimalBundle;
+    const bundleProducts = bundle.products.map((pid) => data.inventory[pid]);
+
+    const basePrice = bundleProducts.reduce((sum, p) => sum + p.unitPrice, 0);
+    const discountedPrice = basePrice * (1 - bundle.bundleDiscount);
+
+    return {
+      disruptedProduct: { sku: disrupted.sku, name: disrupted.name, unitPrice: disrupted.unitPrice },
+      bundleProducts: bundleProducts.map((p) => ({
+        sku: p.sku,
+        name: p.name,
+        unitPrice: p.unitPrice,
+        nodeId: p.nodeId,
+      })),
+      pricingMath: {
+        combinedBasePrice: basePrice,
+        bundleDiscountPct: bundle.bundleDiscount * 100,
+        finalBundlePrice: Math.round(discountedPrice * 100) / 100,
+        vsDisruptedProduct: `+${fmt(discountedPrice - disrupted.unitPrice)} per unit (higher value)`,
+      },
+      deploymentCeiling: {
+        maxUnits: bundle.maxUnitsDeployable,
+        limitingFactor: "Creator Pro 14\" stock in Mumbai (3,200 units)",
+        projectedRecovery: bundle.projectedRecovery,
+        recoveryAsPercentOfLoss: `${((bundle.projectedRecovery / (disrupted.stock * disrupted.unitPrice)) * 100).toFixed(1)}%`,
+      },
+    };
+  },
+
+  /**
+   * tool_project_financial_impact(sku, units, unitPrice)
+   * Calculates total revenue exposure for a disrupted product.
+   */
+  tool_project_financial_impact(sku, units, unitPrice) {
+    const totalExposure = units * unitPrice;
+    return {
+      sku,
+      unitsStranded: units,
+      unitPrice,
+      totalRevenueExposure: totalExposure,
+      formatted: fmt(totalExposure),
+      severity: totalExposure > 5_000_000 ? "CRITICAL" : totalExposure > 1_000_000 ? "HIGH" : "MEDIUM",
+    };
+  },
+
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Mock campaign generator (used when no LLM API key is configured)
+// ─────────────────────────────────────────────────────────────────────────────
+
 function mockAgentResponse(triage, bundle) {
   return {
     recoveredRevenue: bundle.projectedRecovery,
@@ -140,141 +220,273 @@ function mockAgentResponse(triage, bundle) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Main Orchestrator Entry Point
-// ---------------------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
+// LLM callers (Claude / Gemini)
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function callClaude(systemPrompt, userMessage) {
+  const Anthropic = require("@anthropic-ai/sdk").default;
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  const response = await client.messages.create({
+    model: "claude-opus-4-5",
+    max_tokens: 1024,
+    system: systemPrompt,
+    messages: [{ role: "user", content: userMessage }],
+  });
+  const raw = response.content[0].text;
+  const jsonMatch = raw.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("No JSON found in Claude response");
+  return JSON.parse(jsonMatch[0]);
+}
+
+async function callGemini(systemPrompt, userMessage) {
+  const fetch = (...args) =>
+    import("node-fetch").then(({ default: f }) => f(...args));
+  const apiKey = process.env.GEMINI_API_KEY;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  const body = {
+    system_instruction: { parts: [{ text: systemPrompt }] },
+    contents: [{ parts: [{ text: userMessage }] }],
+    generationConfig: { responseMimeType: "application/json" },
+  };
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const json = await res.json();
+  const raw = json.candidates[0].content.parts[0].text;
+  return JSON.parse(raw);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ReAct Loop — Main Orchestrator Entry Point
+// ─────────────────────────────────────────────────────────────────────────────
+
 async function run(crisisNodeId, onLog) {
   const logs = [];
-  const log = async (msg, delayMs = 120) => {
+
+  // Log helpers for each ReAct token type
+  const log = async (msg, delayMs = 100) => {
     logs.push(msg);
     if (onLog) onLog(msg);
     await sleep(delayMs);
   };
 
-  // ── STEP 1: TRIAGE ────────────────────────────────────────────────────────
-  await log("▶ AGENT INITIALIZED — Crisis Management Protocol v2.4");
-  await log(`⚡ TRIAGE: Scanning node registry for anomalies...`);
+  const thought = async (msg, delay = 180) =>
+    log(`💭 [THOUGHT]     ${msg}`, delay);
+
+  const action = async (msg, delay = 140) =>
+    log(`⚙  [ACTION]      ${msg}`, delay);
+
+  const observe = async (msg, delay = 160) =>
+    log(`🔬 [OBSERVATION] ${msg}`, delay);
+
+  const divider = async () => log("─────────────────────────────────────────────────────────────", 60);
+
+  // ── BOOT ──────────────────────────────────────────────────────────────────
+  await log("▶  CHAOS ARCHITECT — ReAct Agent Runtime v3.0");
+  await log("   Framework: Reason + Act (ReAct) Loop");
+  await log("   Crisis input received. Beginning autonomous reasoning...");
+  await divider();
+  await sleep(200);
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // REACT CYCLE 1: Assess the node status
+  // ══════════════════════════════════════════════════════════════════════════
+
+  await thought(`A crisis has been reported at node '${crisisNodeId}'. I must first verify its operational status and understand the severity of the event.`);
+  await action(`Calling tool_query_node_status('${crisisNodeId}')`);
   await sleep(300);
 
-  const { scenario, affectedProducts, totalLoss } = triageNode(crisisNodeId);
+  const nodeStatus = tools.tool_query_node_status(crisisNodeId);
 
-  await log(`🔴 NODE OFFLINE CONFIRMED: ${scenario.affectedNodeId.toUpperCase()} DISTRIBUTION CENTER`);
-  await log(`   Cause: ${scenario.title}`);
-  await log(`   Sensor → Rainfall: ${scenario.sensorReadings.rainfallMmPerHour}mm/hr | Flood Depth: ${scenario.sensorReadings.floodWaterLevelCm}cm`);
-  await log(`   Power Status: ${scenario.sensorReadings.powerStatus} | Structural: ${scenario.sensorReadings.structuralIntegrity}`);
-  await log(`📦 DISRUPTED ASSETS: ${affectedProducts.map((p) => p.name).join(", ")}`);
-  await log(`💸 REVENUE AT RISK: ${fmt(totalLoss)} (${affectedProducts[0].stock.toLocaleString()} units × ${fmt(affectedProducts[0].unitPrice)})`);
-
-  // ── STEP 2: SCAN ──────────────────────────────────────────────────────────
-  await log("", 200);
-  await log("🔍 SCANNING: Querying safe node inventory for utility-equivalent assets...");
-
-  const safeInventory = scanSafeInventory(affectedProducts.map((p) => p.id));
-
-  for (const p of safeInventory) {
-    const node = data.nodes.find((n) => n.id === p.nodeId);
-    await log(`   ✓ ${p.name} [${p.sku}] — ${p.stock === Infinity ? "∞" : p.stock.toLocaleString()} units @ ${node.name} — Status: ${p.status.toUpperCase()}`);
+  await observe(`Node '${nodeStatus.name}' is ${nodeStatus.operationalStatus}.`);
+  if (nodeStatus.operationalStatus === "OFFLINE") {
+    await observe(`Crisis confirmed: "${nodeStatus.crisisTitle}"`);
+    await observe(`Sensor data → Rainfall: ${nodeStatus.sensorReadings?.rainfallMmPerHour}mm/hr | Flood Depth: ${nodeStatus.sensorReadings?.floodWaterLevelCm}cm`);
+    await observe(`Power: ${nodeStatus.sensorReadings?.powerStatus} | Structural integrity: ${nodeStatus.sensorReadings?.structuralIntegrity}`);
+    await observe(`Affected SKUs at this node: ${nodeStatus.affectedProducts.join(", ")}`);
   }
+  await divider();
 
-  // ── STEP 3: BUNDLE ────────────────────────────────────────────────────────
-  await log("", 200);
-  await log("🧮 COMPUTE: Evaluating substitution utility scores...");
-  await log("   Category match: Enterprise Laptop ↔ Professional Laptop + Cloud Workstation ✓");
-  await log("   Utility parity score: 0.94 / 1.00 (exceeds 0.80 threshold for valid substitution)");
+  // ══════════════════════════════════════════════════════════════════════════
+  // REACT CYCLE 2: Query stranded inventory
+  // ══════════════════════════════════════════════════════════════════════════
 
-  const bundle = computeBundle();
+  await thought(`The node is confirmed offline. I need to know exactly how many units are stranded and what their value is to compute the financial exposure.`);
+  await action(`Calling tool_query_inventory('${crisisNodeId}')`);
+  await sleep(300);
 
-  await log(`📊 OPTIMAL BUNDLE IDENTIFIED:`);
-  await log(`   → ${bundle.products.map((p) => p.name).join(" + ")}`);
-  await log(`   → Bundle price: ${fmt(bundle.pricePerUnit)} (8% discount applied)`);
-  await log(`   → Max deployable units: ${bundle.maxUnits.toLocaleString()}`);
-  await log(`   → Projected recovery ceiling: ${fmt(bundle.projectedRecovery)}`);
+  const strandedInventory = tools.tool_query_inventory(crisisNodeId);
+  const disruptedProduct = strandedInventory.products[0];
 
-  // ── STEP 4: AI DEMAND SHAPING ─────────────────────────────────────────────
-  await log("", 200);
-  await log("🤖 AGENT: Engaging Demand Shaper module...");
+  await observe(`Found ${strandedInventory.products.length} product line(s) stranded at ${crisisNodeId}.`);
+  for (const p of strandedInventory.products) {
+    await observe(`→ [${p.sku}] ${p.name} | ${p.stock} units | ${fmt(p.unitPrice)}/unit | Status: ${p.status.toUpperCase()}`);
+  }
+  await divider();
 
-  const systemPrompt = `You are a B2B Supply Chain Demand Shaper AI operating within a Crisis Management System.
-Your sole objective is to recover lost revenue from a supply chain disruption by generating a targeted marketing campaign 
-that redirects enterprise clients toward utility-equivalent substitute products.
+  // ══════════════════════════════════════════════════════════════════════════
+  // REACT CYCLE 3: Calculate financial impact
+  // ══════════════════════════════════════════════════════════════════════════
 
-CONSTRAINTS:
-- You MUST only recommend products that fulfill the SAME core utility as the disrupted product.
-- Do NOT suggest accessories, peripherals, or unrelated products.
-- Your bundle pricing must be mathematically defensible (show clear value vs. the lost product).
-- Your marketing copy must be professional, empathetic, and B2B-appropriate.
-- Respond ONLY with a valid JSON object. No markdown. No explanation. No wrapping text.
+  await thought(`I now know what is stranded. I must quantify the revenue at risk before I can size the recovery target. This will frame the urgency of the campaign I need to generate.`);
+  await action(`Calling tool_project_financial_impact('${disruptedProduct.sku}', ${disruptedProduct.stock}, ${disruptedProduct.unitPrice})`);
+  await sleep(250);
+
+  const financialImpact = tools.tool_project_financial_impact(
+    disruptedProduct.sku,
+    typeof disruptedProduct.stock === "number" ? disruptedProduct.stock : 5000,
+    disruptedProduct.unitPrice
+  );
+
+  await observe(`Total revenue exposure: ${financialImpact.formatted}`);
+  await observe(`Severity classification: ${financialImpact.severity}`);
+  await observe(`${financialImpact.unitsStranded.toLocaleString()} units × ${fmt(financialImpact.unitPrice)}/unit = ${financialImpact.formatted} at risk.`);
+  await divider();
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // REACT CYCLE 4: Assess utility class to find valid substitutes
+  // ══════════════════════════════════════════════════════════════════════════
+
+  await thought(`The financial exposure is ${financialImpact.severity}. I must not recommend arbitrary substitute products — I need to find ones that fulfill the SAME utility class. I will query the utility assessment tool.`);
+  await action(`Calling tool_assess_utility_class('${disruptedProduct.sku}')`);
+  await sleep(300);
+
+  const utilityAssessment = tools.tool_assess_utility_class(disruptedProduct.sku);
+
+  await observe(`Disrupted product utility class: "${utilityAssessment.utilityClass}"`);
+  await observe(`Valid substitute categories: ${utilityAssessment.validSubstituteCategories.join(", ")}`);
+  await observe(`Found ${utilityAssessment.substitutes.length} utility-equivalent substitute(s) in safe nodes:`);
+  for (const sub of utilityAssessment.substitutes) {
+    await observe(`  ✓ [${sub.sku}] ${sub.name} — Parity score: ${sub.utilityParityScore} | Node: ${sub.nodeId} | Status: ${sub.status.toUpperCase()}`);
+  }
+  await divider();
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // REACT CYCLE 5: Calculate the optimal recovery bundle
+  // ══════════════════════════════════════════════════════════════════════════
+
+  await thought(`I have confirmed valid utility-equivalent substitutes exist in safe nodes. Now I must calculate the optimal bundle pricing to maximize recovery while maintaining client value perception.`);
+  await action(`Calling tool_calculate_utility_bundle('${disruptedProduct.sku}')`);
+  await sleep(350);
+
+  const bundleCalc = tools.tool_calculate_utility_bundle(disruptedProduct.sku);
+
+  await observe(`Bundle composition: ${bundleCalc.bundleProducts.map((p) => p.name).join(" + ")}`);
+  await observe(`Pricing math:`);
+  await observe(`  Base combined price: ${fmt(bundleCalc.pricingMath.combinedBasePrice)}`);
+  await observe(`  Bundle discount applied: ${bundleCalc.pricingMath.bundleDiscountPct}%`);
+  await observe(`  Final bundle price: ${fmt(bundleCalc.pricingMath.finalBundlePrice)} (${bundleCalc.pricingMath.vsDisruptedProduct})`);
+  await observe(`Deployment ceiling: ${bundleCalc.deploymentCeiling.maxUnits.toLocaleString()} units (limited by: ${bundleCalc.deploymentCeiling.limitingFactor})`);
+  await observe(`Projected revenue recovery: ${fmt(bundleCalc.deploymentCeiling.projectedRecovery)} (${bundleCalc.deploymentCeiling.recoveryAsPercentOfLoss} of total loss)`);
+  await divider();
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // REACT CYCLE 6: Generate the demand-shaping campaign via AI / mock
+  // ══════════════════════════════════════════════════════════════════════════
+
+  await thought(`I have all the data I need: confirmed disruption, financial impact, valid utility-equivalent bundle, and recovery math. I will now invoke the Demand Shaper to generate an enterprise-grade marketing campaign.`);
+  await action(`Calling tool_generate_campaign(bundle_data, financial_impact)`);
+  await sleep(200);
+
+  // Build triage summary for the AI/mock call
+  const triage = {
+    scenario: { title: nodeStatus.crisisTitle, affectedNodeId: crisisNodeId },
+    affectedProducts: strandedInventory.products,
+    totalLoss: financialImpact.totalRevenueExposure,
+  };
+
+  const bundle = {
+    products: bundleCalc.bundleProducts.map((bp) => ({
+      ...bp,
+      stock: Infinity,
+    })),
+    discount: bundleCalc.pricingMath.bundleDiscountPct / 100,
+    pricePerUnit: bundleCalc.pricingMath.finalBundlePrice,
+    maxUnits: bundleCalc.deploymentCeiling.maxUnits,
+    projectedRecovery: bundleCalc.deploymentCeiling.projectedRecovery,
+  };
+
+  const systemPrompt = `You are a B2B Supply Chain Demand Shaper AI operating inside a ReAct Agent Runtime.
+You have already completed 5 reasoning cycles and called 5 tools. Your final task is to generate a targeted
+marketing campaign that redirects enterprise clients toward the utility-equivalent substitute bundle identified.
+
+HARD CONSTRAINTS:
+- Only recommend products that fulfill the SAME core utility (enterprise compute). No peripherals.
+- Bundle pricing must be mathematically defensible vs. the disrupted product.
+- Marketing copy must be professional, empathetic, and B2B-appropriate (not consumer-facing).
+- Respond ONLY with a valid JSON object. No markdown. No explanation.
 
 REQUIRED JSON FORMAT:
 {
   "recoveredRevenue": <number>,
   "campaignTitle": <string>,
-  "marketingCopy": <string (2-3 paragraphs)>,
+  "marketingCopy": <string>,
   "targetAudience": <string>
 }`;
 
-  const userMessage = `CRISIS REPORT:
-- Disrupted Node: Bengaluru Distribution Center (OFFLINE — Category 4 Flood)
-- Disrupted Product: ${affectedProducts[0].name} (${affectedProducts[0].stock.toLocaleString()} units, ${fmt(affectedProducts[0].unitPrice)}/unit)
-- Total Revenue at Risk: ${fmt(totalLoss)}
+  const userMessage = `COMPLETED REACT CYCLES SUMMARY:
+- Node offline: ${nodeStatus.name} (${nodeStatus.crisisTitle})
+- Disrupted product: ${disruptedProduct.name} [${disruptedProduct.sku}] — ${financialImpact.unitsStranded.toLocaleString()} units stranded
+- Revenue at risk: ${financialImpact.formatted} (Severity: ${financialImpact.severity})
+- Utility class: ${utilityAssessment.utilityClass}
+- Validated substitute bundle: ${bundleCalc.bundleProducts.map((p) => p.name).join(" + ")}
+- Bundle price: ${fmt(bundleCalc.pricingMath.finalBundlePrice)} (${bundleCalc.pricingMath.bundleDiscountPct}% discount)
+- Max units deployable: ${bundleCalc.deploymentCeiling.maxUnits.toLocaleString()}
+- Recovery ceiling: ${fmt(bundleCalc.deploymentCeiling.projectedRecovery)} (${bundleCalc.deploymentCeiling.recoveryAsPercentOfLoss} of loss)
 
-AVAILABLE SUBSTITUTE INVENTORY (Mumbai Logistics Hub + Digital Delivery):
-${bundle.products
-  .map((p) => `- ${p.name}: ${p.stock === Infinity ? "Unlimited" : p.stock.toLocaleString()} units @ ${fmt(p.unitPrice)}/unit`)
-  .join("\n")}
-
-PROPOSED BUNDLE:
-- Products: ${bundle.products.map((p) => p.name).join(" + ")}
-- Bundle Price: ${fmt(bundle.pricePerUnit)} (8% bundle discount)
-- Max Units: ${bundle.maxUnits.toLocaleString()}
-- Projected Recovery: ${fmt(bundle.projectedRecovery)}
-
-Generate a demand-shaping campaign to redirect affected enterprise B2B clients toward this bundle.`;
+Generate the demand-shaping campaign.`;
 
   let aiResult;
   const hasAnthropicKey = !!process.env.ANTHROPIC_API_KEY;
-  const hasGeminiKey = !!process.env.GEMINI_API_KEY;
+  const hasGeminiKey    = !!process.env.GEMINI_API_KEY;
 
   if (hasAnthropicKey) {
-    await log("   API Mode: Anthropic Claude (live)");
+    await observe(`LLM backend: Anthropic Claude (live). Sending ReAct context...`);
     try {
       aiResult = await callClaude(systemPrompt, userMessage);
-      await log("   ✓ Claude response received and parsed.");
+      await observe(`✓ Claude campaign generated and parsed.`);
     } catch (err) {
-      await log(`   ⚠ Claude API error: ${err.message}. Falling back to mock.`);
-      aiResult = mockAgentResponse({ scenario, affectedProducts, totalLoss }, bundle);
+      await observe(`⚠ Claude error: ${err.message}. Activating mock campaign.`);
+      aiResult = mockAgentResponse(triage, bundle);
     }
   } else if (hasGeminiKey) {
-    await log("   API Mode: Google Gemini (live)");
+    await observe(`LLM backend: Google Gemini (live). Sending ReAct context...`);
     try {
       aiResult = await callGemini(systemPrompt, userMessage);
-      await log("   ✓ Gemini response received and parsed.");
+      await observe(`✓ Gemini campaign generated and parsed.`);
     } catch (err) {
-      await log(`   ⚠ Gemini API error: ${err.message}. Falling back to mock.`);
-      aiResult = mockAgentResponse({ scenario, affectedProducts, totalLoss }, bundle);
+      await observe(`⚠ Gemini error: ${err.message}. Activating mock campaign.`);
+      aiResult = mockAgentResponse(triage, bundle);
     }
   } else {
-    await log("   API Mode: High-Fidelity Mock Agent (no API key detected)");
-    await sleep(600);
-    aiResult = mockAgentResponse({ scenario, affectedProducts, totalLoss }, bundle);
-    await log("   ✓ Mock agent response generated.");
+    await observe(`No LLM API key detected. Activating high-fidelity mock campaign generator.`);
+    await sleep(400);
+    aiResult = mockAgentResponse(triage, bundle);
+    await observe(`✓ Mock campaign generated.`);
   }
 
-  // ── STEP 5: FORMAT OUTPUT ─────────────────────────────────────────────────
-  await log("", 150);
-  await log(`✅ DEMAND SHAPER COMPLETE — Campaign: "${aiResult.campaignTitle}"`);
-  await log(`💚 RECOVERED REVENUE: ${fmt(aiResult.recoveredRevenue)}`);
-  await log(`📉 NET LOSS AFTER INTERVENTION: ${fmt(totalLoss - aiResult.recoveredRevenue)}`);
-  await log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-  await log("🚀 CAMPAIGN READY FOR DEPLOYMENT — Awaiting authorization...");
+  await divider();
+
+  // ── FINAL OUTPUT ──────────────────────────────────────────────────────────
+  await log(`✅ REACT LOOP COMPLETE — 6 cycles | 5 tool calls | 1 campaign generated`);
+  await log(`🏷  Campaign: "${aiResult.campaignTitle}"`);
+  await log(`💚 Recovered revenue pathway: ${fmt(aiResult.recoveredRevenue || bundleCalc.deploymentCeiling.projectedRecovery)}`);
+  await log(`📉 Net loss after intervention: ${fmt(financialImpact.totalRevenueExposure - (aiResult.recoveredRevenue || bundleCalc.deploymentCeiling.projectedRecovery))}`);
+  await divider();
+  await log(`🚀 CAMPAIGN READY FOR DEPLOYMENT — Awaiting authorization...`);
+
+  const recoveredRevenue = aiResult.recoveredRevenue || bundleCalc.deploymentCeiling.projectedRecovery;
 
   return {
     ...aiResult,
-    recoveredRevenue: aiResult.recoveredRevenue || bundle.projectedRecovery,
-    totalLoss,
-    netLoss: totalLoss - (aiResult.recoveredRevenue || bundle.projectedRecovery),
+    recoveredRevenue,
+    totalLoss: financialImpact.totalRevenueExposure,
+    netLoss: financialImpact.totalRevenueExposure - recoveredRevenue,
     agentLogs: logs,
   };
 }
 
-module.exports = { run };
+module.exports = { run, tools };

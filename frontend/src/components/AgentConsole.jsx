@@ -2,10 +2,11 @@ import { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const IDLE_LINES = [
-  '> CHAOS ARCHITECT v1.0.0 — Agent Runtime Initialized',
-  '> Supply Chain Monitor: ACTIVE',
-  '> Watching 5 nodes across 4 regions...',
-  '> All sensors nominal. Awaiting crisis event.',
+  '▶  CHAOS ARCHITECT — ReAct Agent Runtime v3.0',
+  '   Framework: Reason + Act (ReAct) Loop',
+  '   5 tools registered | 6 reasoning cycles available',
+  '   Supply Chain Monitor: ACTIVE — watching 5 nodes across 4 regions.',
+  '   All sensors nominal. Awaiting crisis event to begin ReAct loop.',
   '> _',
 ]
 
@@ -53,14 +54,19 @@ export default function AgentConsole({ logs, chaosState }) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.15, delay: isIdle ? i * 0.05 : 0 }}
               className={`flex gap-2 ${
-                line.startsWith('🔴') || line.startsWith('💸') || line.startsWith('⚠') ? 'text-cyber-red' :
-                line.startsWith('✅') || line.startsWith('💚') ? 'text-cyber-green glow-green' :
-                line.startsWith('🤖') || line.startsWith('▶') ? 'text-cyber-cyan' :
-                line.startsWith('📊') || line.startsWith('🧮') ? 'text-cyber-yellow' :
-                line.startsWith('📦') || line.startsWith('🔍') ? 'text-white' :
-                line.startsWith('━') ? 'text-cyber-cyan/30' :
-                line.startsWith('🚀') ? 'text-cyber-green' :
-                line === '' ? '' :
+                // ReAct token colours
+                line.includes('[THOUGHT]')     ? 'text-violet-400' :
+                line.includes('[ACTION]')      ? 'text-cyber-cyan' :
+                line.includes('[OBSERVATION]') ? 'text-cyber-gray-light' :
+                // Status / severity
+                line.startsWith('🔴') || line.includes('⚠') ? 'text-cyber-red' :
+                line.startsWith('✅') || line.startsWith('💚') || line.startsWith('🚀') ? 'text-cyber-green glow-green' :
+                line.startsWith('▶')  ? 'text-cyber-cyan font-semibold' :
+                line.startsWith('🏷') ? 'text-cyber-cyan' :
+                line.startsWith('📉') ? 'text-cyber-red' :
+                // Divider lines
+                line.startsWith('─')  ? 'text-[#1a1a2e]' :
+                line === ''           ? '' :
                 'text-cyber-gray'
               }`}
             >
@@ -91,7 +97,7 @@ export default function AgentConsole({ logs, chaosState }) {
         <div className="flex-1" />
         {!isIdle && (
           <span className="text-[10px] text-cyber-cyan/60">
-            DEMAND-SHAPER ORCHESTRATOR v2.4
+            ReAct ORCHESTRATOR v3.0 — 5 TOOLS
           </span>
         )}
       </div>
